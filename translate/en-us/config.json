@@ -1,0 +1,5 @@
+{
+  "api_key_not_found": "Error: Gemini API key not found.\nSet the GEMINI_API_KEY environment variable or use the --api-key flag.",
+  "yolo_warning": "[WARNING] Running in YOLO mode. All tools will be allowed without confirmation.",
+  "error_reading_instructions": "Error reading system instructions file: {error}"
+}

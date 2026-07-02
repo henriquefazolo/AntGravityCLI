@@ -1,16 +1,18 @@
 import colorama
 from colorama import Fore, Style
 
-# Inicializa colorama para suporte de cores no console (especialmente Windows)
+import i18n
+
+# Initialize colorama for console color support (especially Windows)
 colorama.init()
 
 def cli_ask_user_handler(tool_call) -> bool:
-    """Manipulador para solicitar aprovação do usuário no terminal no modo seguro."""
-    print(f"\n{Fore.LIGHTYELLOW_EX}[?] O agente deseja executar a ferramenta: {Fore.WHITE}{tool_call.name}{Style.RESET_ALL}")
-    print(f"    Argumentos: {tool_call.args}")
+    """Handler to request user approval in the terminal in safe mode."""
+    print(f"\n{Fore.LIGHTYELLOW_EX}{i18n.t('handlers', 'agent_wants_to_execute', name=tool_call.name)}{Style.RESET_ALL}")
+    print(f"{i18n.t('handlers', 'arguments', args=tool_call.args)}")
     try:
-        ans = input(f"{Fore.CYAN}    Permitir execução? [y/N]: {Style.RESET_ALL}").strip().lower()
+        ans = input(f"{Fore.CYAN}{i18n.t('handlers', 'allow_execution')}{Style.RESET_ALL}").strip().lower()
         return ans in ('y', 'yes', 'sim', 's')
     except (KeyboardInterrupt, EOFError):
-        print("\n    Negado por interrupção.")
+        print(f"\n{i18n.t('handlers', 'denied_by_interruption')}")
         return False

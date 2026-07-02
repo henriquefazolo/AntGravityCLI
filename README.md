@@ -61,11 +61,41 @@ You can customize the CLI behavior using flags:
 | `--skills-path` | `-k` | Path to skills folders (can be repeated). If not provided and the `./skills` folder exists, it will be loaded by default. |
 | `--silent` | | Hides internal thoughts and tool calls in the terminal. |
 | `--verbose` | `-v` | Displays the AI's internal reasoning thoughts (Chain of Thought) in gray on the console. |
+| `--language` | `-l` | Specifies the output translation language (default: `en-us`, e.g. `pt-br`, `en-us`). |
 
 Advanced usage example:
 ```powershell
 python main.py -m gemini-3.5-flash -y -s "You are a concise assistant speaking Spanish" "Hello!"
 ```
+
+---
+
+## Localization (i18n)
+
+The AntGravity CLI features built-in internationalization (i18n). Output messages, error states, and terminal prompts are decoupled from the core source code and stored as localized translation files inside the `translate/` directory.
+
+### Structure of `translate/`
+```text
+translate/
+├── pt-br/                         # Brazilian Portuguese translations
+│   ├── config.json
+│   ├── console_io.json
+│   ├── handlers.json
+│   ├── parser.json
+│   └── repl.json
+└── en-us/                         # English translations (Default)
+    ├── config.json
+    ├── console_io.json
+    ├── handlers.json
+    ├── parser.json
+    └── repl.json
+```
+
+### Adding New Languages
+To support a new language (e.g. `es-es` for Spanish):
+1. Create a new directory named after the locale code inside `translate/` (e.g. `translate/es-es/`).
+2. Copy the JSON files from `translate/en-us/` into the new folder and translate their text values.
+3. Switch the CLI runtime language using the `--language es-es` flag.
 
 ---
 

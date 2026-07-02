@@ -1,19 +1,20 @@
 import os
 import re
 from typing import Tuple, List
+import i18n
 from interfaces import DirectiveProcessor
 
 class FileDirectiveProcessor(DirectiveProcessor):
-    """Processador de diretivas de arquivos e pastas com o prefixo '@' (SRP/OCP/LSP)."""
+    """File and folder directive processor with the '@' prefix (SRP/OCP/LSP)."""
     
     def process(self, prompt: str, skills_paths: list[str] = None) -> Tuple[str, list[str]]:
         extra_context = []
-        # Aceita @[caminho com espaços] ou @caminho_sem_espaços (evita emails)
+        # Accepts @[path with spaces] or @path_without_spaces (avoids emails)
         file_matches = re.finditer(r'(?<!\w)@(?:\[([^\]]+)\]|([^\s\x00-\x1F\x7F]+))', prompt)
         files_to_inject = []
         for match in file_matches:
             path = match.group(1) or match.group(2)
-            # Limpar pontuações comuns no final do caminho sem colchetes
+            # Clean common punctuation at the end of the path without brackets
             if not match.group(1):
                 path = re.sub(r'[.,;:!?)]+$', '', path)
             files_to_inject.append(path)
@@ -23,26 +24,26 @@ class FileDirectiveProcessor(DirectiveProcessor):
                 try:
                     with open(filepath, "r", encoding="utf-8") as f:
                         content = f.read()
-                    extra_context.append(f"=== CONTEÚDO DO ARQUIVO: {os.path.basename(filepath)} ({filepath}) ===\n{content}\n")
+                    extra_context.append(f"{i18n.t('parser', 'file_content_header', filename=os.path.basename(filepath), filepath=filepath)}\n{content}\n")
                 except Exception as e:
-                    extra_context.append(f"[Erro ao ler o arquivo {filepath}: {e}]\n")
+                    extra_context.append(f"{i18n.t('parser', 'error_reading_file', filepath=filepath, error=str(e))}\n")
             elif os.path.isdir(filepath):
                 try:
                     entries = os.listdir(filepath)
                     content = "\n".join(entries)
-                    extra_context.append(f"=== LISTAGEM DO DIRETÓRIO: {filepath} ===\n{content}\n")
+                    extra_context.append(f"{i18n.t('parser', 'directory_listing_header', filepath=filepath)}\n{content}\n")
                 except Exception as e:
-                    extra_context.append(f"[Erro ao listar diretório {filepath}: {e}]\n")
+                    extra_context.append(f"{i18n.t('parser', 'error_listing_directory', filepath=filepath, error=str(e))}\n")
                     
         return prompt, extra_context
 
 
 class SkillDirectiveProcessor(DirectiveProcessor):
-    """Processador de diretivas de skills com o prefixo '/' (SRP/OCP/LSP)."""
+    """Skill directive processor with the '/' prefix (SRP/OCP/LSP)."""
     
     def process(self, prompt: str, skills_paths: list[str] = None) -> Tuple[str, list[str]]:
         extra_context = []
-        # Ignora comandos especiais do REPL (/exit, /quit, /reset)
+        # Ignores special REPL commands (/exit, /quit, /reset)
         skill_matches = re.finditer(r'(?<!\w)/([a-zA-Z0-9_-]+)', prompt)
         skills_to_inject = []
         for match in skill_matches:
@@ -62,16 +63,16 @@ class SkillDirectiveProcessor(DirectiveProcessor):
                     try:
                         with open(skill_md_path, "r", encoding="utf-8") as f:
                             content = f.read()
-                        extra_context.append(f"=== INSTRUÇÕES DA SKILL: {skill_name} ===\n{content}\n")
+                        extra_context.append(f"{i18n.t('parser', 'skill_instructions_header', skill_name=skill_name)}\n{content}\n")
                         break
                     except Exception as e:
-                        extra_context.append(f"[Erro ao carregar a skill {skill_name}: {e}]\n")
+                        extra_context.append(f"{i18n.t('parser', 'error_loading_skill', skill_name=skill_name, error=str(e))}\n")
                         
         return prompt, extra_context
 
 
 class PromptPreprocessor:
-    """Orquestrador do pré-processamento do prompt (SRP/OCP)."""
+    """Orchestrator for prompt preprocessing (SRP/OCP)."""
     
     def __init__(self, processors: list[DirectiveProcessor] = None):
         self._processors = processors if processors is not None else [
@@ -91,7 +92,7 @@ class PromptPreprocessor:
         return current_prompt
 
 
-# Wrapper de compatibilidade funcional
+# Functional compatibility wrapper
 def preprocess_prompt(prompt: str, skills_paths: list[str] = None) -> str:
-    """Wrapper funcional compatível com versões anteriores."""
+    """Functional wrapper compatible with previous versions."""
     return PromptPreprocessor().preprocess(prompt, skills_paths)

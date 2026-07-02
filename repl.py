@@ -3,18 +3,19 @@ import os
 import click
 from colorama import Fore, Style
 from google.antigravity.types import Thought, Text, ToolCall, ToolResult
+import i18n
 from interfaces import OutputWriter, InputReader
 from console_io import ConsoleOutputWriter, ConsoleInputReader
 from parser import preprocess_prompt
 
 async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silent=False, verbose=False):
-    """Executa o chat e transmite a resposta (pensamentos, ferramentas e texto) em tempo real."""
+    """Runs the chat and streams the response (thoughts, tools, and text) in real time."""
     if writer is None:
         writer = ConsoleOutputWriter()
         
     try:
         writer.reset()
-        writer.start_loading("Pensando...")
+        writer.start_loading()
         response = await agent.chat(prompt)
         
         async for chunk in response.chunks:
@@ -32,13 +33,13 @@ async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silen
         
         writer.stop_loading()
         writer.reset()
-        print() # Quebra de linha final para alinhamento
+        print() # Final line break for alignment
     except Exception as e:
         writer.stop_loading()
-        click.echo(f"Erro durante a conversação: {e}", err=True)
+        click.echo(i18n.t("repl", "error_during_conversation", error=str(e)), err=True)
 
 def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
-    """Varre as pastas de skills registradas e retorna comandos e gatilhos de skills formatados."""
+    """Scans registered skills folders and returns formatted skill commands and triggers."""
     suggestions = ["/exit", "/quit", "/reset"]
     for path in skills_paths:
         if path and os.path.exists(path) and os.path.isdir(path):
@@ -46,7 +47,7 @@ def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
                 for entry in os.listdir(path):
                     entry_path = os.path.join(path, entry)
                     if os.path.isdir(entry_path):
-                        # Se contiver o arquivo SKILL.md, é uma skill ativa
+                        # If it contains a SKILL.md file, it is an active skill
                         if os.path.exists(os.path.join(entry_path, "SKILL.md")):
                             suggestions.append(f"/{entry}")
             except Exception:
@@ -54,7 +55,7 @@ def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
     return sorted(list(set(suggestions)))
 
 async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: OutputWriter = None, silent=False, verbose=False):
-    """Executa o terminal interativo (REPL) conversando com o agente."""
+    """Runs the interactive terminal (REPL) conversing with the agent."""
     if reader is None:
         reader = ConsoleInputReader()
     if writer is None:
@@ -62,29 +63,29 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
         
     suggestions = _get_repl_suggestions(resolved_skills)
         
-    click.echo(f"\n{Fore.MAGENTA}{Style.BRIGHT}=== Antigravity CLI (Modo Interativo) ==={Style.RESET_ALL}")
-    click.echo(f"{Fore.CYAN}Digite suas mensagens. Comandos especiais:{Style.RESET_ALL}")
-    click.echo(f"  {Fore.GREEN}/exit{Style.RESET_ALL} ou {Fore.GREEN}/quit{Style.RESET_ALL} - Sair do CLI")
-    click.echo(f"  {Fore.GREEN}/reset{Style.RESET_ALL}         - Reiniciar o histórico da conversa")
+    click.echo(f"\n{Fore.MAGENTA}{Style.BRIGHT}{i18n.t('repl', 'repl_title')}{Style.RESET_ALL}")
+    click.echo(f"{Fore.CYAN}{i18n.t('repl', 'special_commands_label')}{Style.RESET_ALL}")
+    click.echo(f"  {Fore.GREEN}/exit{Style.RESET_ALL} or {Fore.GREEN}/quit{Style.RESET_ALL} - {i18n.t('repl', 'command_exit_desc')}")
+    click.echo(f"  {Fore.GREEN}/reset{Style.RESET_ALL}         - {i18n.t('repl', 'command_reset_desc')}")
     click.echo(f"{Fore.MAGENTA}{'-' * 40}{Style.RESET_ALL}")
 
     while True:
         try:
-            user_input = await reader.read_input("Você > ", suggestions=suggestions)
+            user_input = await reader.read_input(i18n.t("repl", "prompt_you"), suggestions=suggestions)
         except (KeyboardInterrupt, EOFError):
-            click.echo(f"\n{Fore.YELLOW}Saindo...{Style.RESET_ALL}")
+            click.echo(f"\n{Fore.YELLOW}{i18n.t('repl', 'exiting')}{Style.RESET_ALL}")
             break
 
         if not user_input:
             continue
 
         if user_input in ("/exit", "/quit"):
-            click.echo(f"{Fore.YELLOW}Saindo...{Style.RESET_ALL}")
+            click.echo(f"{Fore.YELLOW}{i18n.t('repl', 'exiting')}{Style.RESET_ALL}")
             break
 
         if user_input == "/reset":
             agent.conversation.clear_history()
-            click.echo("Histórico da conversa limpo!")
+            click.echo(i18n.t("repl", "conversation_history_cleared"))
             continue
 
         processed_input = preprocess_prompt(user_input, resolved_skills)

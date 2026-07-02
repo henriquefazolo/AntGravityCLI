@@ -11,13 +11,15 @@ from config import setup_agent_config
 from parser import preprocess_prompt
 from handlers import cli_ask_user_handler
 from console_io import ConsoleOutputWriter
+import i18n
 
 class TestAntigravityCLIFunctionality(unittest.TestCase):
     def setUp(self):
         self.runner = CliRunner()
+        i18n.set_language("en-us")
 
     def test_help_flag(self):
-        """Verifica se o comando help/ajuda é exibido corretamente."""
+        """Verify that the help command is displayed correctly."""
         result = self.runner.invoke(main, ['--help'])
         self.assertEqual(result.exit_code, 0)
         self.assertIn('Usage:', result.output)
@@ -27,13 +29,13 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
 
     @patch.dict(os.environ, {}, clear=True)
     def test_missing_api_key(self):
-        """Verifica se o erro correto é exibido quando a API Key está ausente."""
+        """Verify that the correct error is displayed when the API Key is missing."""
         result = self.runner.invoke(main, ['--api-key', '', 'Olá'])
-        self.assertIn('Erro: A chave de API do Gemini não foi encontrada', result.output)
+        self.assertIn('Error: Gemini API key not found', result.output)
 
     @patch('builtins.input', return_value='y')
     def test_cli_ask_user_handler_approve(self, mock_input):
-        """Verifica se o gerenciador de políticas aceita 'y' de confirmação do usuário."""
+        """Verify that the policy manager accepts 'y' for user confirmation."""
         mock_tool_call = MagicMock()
         mock_tool_call.name = "RUN_COMMAND"
         mock_tool_call.args = {"cmd": "dir"}
@@ -43,7 +45,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
 
     @patch('builtins.input', return_value='n')
     def test_cli_ask_user_handler_reject(self, mock_input):
-        """Verifica se o gerenciador de políticas rejeita 'n' de confirmação do usuário."""
+        """Verify that the policy manager rejects 'n' for user confirmation."""
         mock_tool_call = MagicMock()
         mock_tool_call.name = "RUN_COMMAND"
         mock_tool_call.args = {"cmd": "rm -rf /"}
@@ -56,7 +58,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
     @patch('runner.stream_chat_response')
     @patch.dict(os.environ, {'GEMINI_API_KEY': 'fake_test_key'})
     def test_cli_runs_with_prompt(self, mock_stream, mock_config, mock_agent):
-        """Verifica se o fluxo básico de chamada com prompt funciona e invoca os agentes corretos."""
+        """Verify that the basic prompt execution flow works and invokes the correct agents."""
         # Criando mocks para o gerenciador de contexto do Agent
         mock_agent_instance = MagicMock()
         mock_agent.return_value.__aenter__.return_value = mock_agent_instance
@@ -80,7 +82,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
     @patch('runner.stream_chat_response')
     @patch.dict(os.environ, {'GEMINI_API_KEY': 'fake_test_key'})
     def test_cli_runs_with_silent_flag(self, mock_stream, mock_config, mock_agent):
-        """Verifica se a flag --silent é propagada corretamente para o stream."""
+        """Verify that the --silent flag is correctly propagated to the stream."""
         mock_agent_instance = MagicMock()
         mock_agent.return_value.__aenter__.return_value = mock_agent_instance
         
@@ -95,25 +97,25 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertEqual(kwargs.get('silent'), True)
 
     def test_preprocess_prompt_file_injection(self):
-        """Verifica se referências a @arquivo são injetadas com o conteúdo do arquivo."""
-        # Criar arquivo temporário para teste
+        """Verify that references to @file are injected with the file content."""
+        # Create temporary file for testing
         temp_file = "temp_test_file.txt"
         try:
             with open(temp_file, "w", encoding="utf-8") as f:
-                f.write("Conteudo de teste do arquivo temporario.")
+                f.write("Temporary file test content.")
             
             prompt = f"Analise o arquivo @{temp_file} por favor."
             processed = preprocess_prompt(prompt)
             
-            self.assertIn("=== CONTEÚDO DO ARQUIVO: temp_test_file.txt", processed)
-            self.assertIn("Conteudo de teste do arquivo temporario.", processed)
+            self.assertIn("=== FILE CONTENT: temp_test_file.txt", processed)
+            self.assertIn("Temporary file test content.", processed)
         finally:
             if os.path.exists(temp_file):
                 os.remove(temp_file)
 
     def test_preprocess_prompt_skill_injection(self):
-        """Verifica se referências a /skill são injetadas com as regras do SKILL.md."""
-        # Criar skill temporária
+        """Verify that references to /skill are injected with the rules from SKILL.md."""
+        # Create temporary skill
         temp_skills_dir = "temp_skills"
         temp_skill_name = "test_skill"
         skill_dir = os.path.join(temp_skills_dir, temp_skill_name)
@@ -127,7 +129,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
             prompt = f"Use a skill /{temp_skill_name} para rodar."
             processed = preprocess_prompt(prompt, skills_paths=[temp_skills_dir])
             
-            self.assertIn("=== INSTRUÇÕES DA SKILL: test_skill", processed)
+            self.assertIn("=== SKILL INSTRUCTIONS: test_skill", processed)
             self.assertIn("Regras da skill de teste.", processed)
         finally:
             # Limpar pastas e arquivos criados
@@ -140,7 +142,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
 
     @patch.dict(os.environ, {'GEMINI_API_KEY': 'fake_key'})
     def test_setup_agent_config_success(self):
-        """Verifica se a configuração do agente é gerada com sucesso."""
+        """Verify that the agent configuration is successfully generated."""
         config = setup_agent_config(
             model='gemini-3.5-flash',
             yolo=False,
@@ -155,7 +157,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
 
     @patch.dict(os.environ, {}, clear=True)
     def test_setup_agent_config_missing_key(self):
-        """Verifica se ValueError é lançado quando a API Key está ausente."""
+        """Verify that ValueError is raised when the API Key is missing."""
         with self.assertRaises(ValueError):
             setup_agent_config(
                 model='gemini-3.5-flash',
@@ -167,7 +169,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
             )
 
     def test_prompt_preprocessor_ocp_extensibility(self):
-        """Verifica se novos processadores de diretivas podem ser adicionados sem alterar o código existente (OCP)."""
+        """Verify that new directive processors can be added without modifying existing code (OCP)."""
         import re
         from interfaces import DirectiveProcessor
         from parser import PromptPreprocessor
@@ -178,7 +180,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
                 extra = []
                 if match:
                     issue_id = match.group(1)
-                    extra.append(f"=== DETALHES DA ISSUE #{issue_id} ===\nCorrigir bug de login no sistema.")
+                    extra.append(f"=== ISSUE #{issue_id} DETAILS ===\nCorrigir bug de login no sistema.")
                 return prompt, extra
 
         preprocessor = PromptPreprocessor(processors=[MockIssueDirectiveProcessor()])
@@ -186,12 +188,12 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         prompt = "Resolva a issue #issue-999"
         processed = preprocessor.preprocess(prompt)
         
-        self.assertIn("=== DETALHES DA ISSUE #999 ===", processed)
+        self.assertIn("=== ISSUE #999 DETAILS ===", processed)
         self.assertIn("Corrigir bug de login no sistema.", processed)
 
     @patch('repl.click.echo')
     def test_run_repl_exit_command(self, mock_echo):
-        """Verifica se o REPL encerra e imprime 'Saindo...' ao receber /quit."""
+        """Verify that the REPL exits and prints 'Exiting...' upon receiving /quit."""
         import asyncio
         from repl import run_repl
         from interfaces import InputReader
@@ -203,7 +205,17 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         mock_agent = MagicMock()
         asyncio.run(run_repl(mock_agent, [], reader=MockInputReader()))
         
-        mock_echo.assert_called_with(f"{Fore.YELLOW}Saindo...{Style.RESET_ALL}")
+        mock_echo.assert_called_with(f"{Fore.YELLOW}Exiting...{Style.RESET_ALL}")
+
+    def test_i18n_translation_keys(self):
+        """Verify that i18n translation keys return correct messages for both en-us and pt-br."""
+        i18n.set_language("en-us")
+        en_msg = i18n.t("repl", "exiting")
+        self.assertEqual(en_msg, "Exiting...")
+        
+        i18n.set_language("pt-br")
+        pt_msg = i18n.t("repl", "exiting")
+        self.assertEqual(pt_msg, "Saindo...")
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,5 @@
+{
+  "api_key_not_found": "Erro: A chave de API do Gemini não foi encontrada.\nDefina a variável de ambiente GEMINI_API_KEY ou use a flag --api-key.",
+  "yolo_warning": "[AVISO] Executando em modo YOLO. Todas as ferramentas serão permitidas sem confirmação.",
+  "error_reading_instructions": "Erro ao ler arquivo de instruções: {error}"
+}

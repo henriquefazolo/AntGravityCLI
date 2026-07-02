@@ -1,0 +1,10 @@
+{
+  "repl_title": "=== AntGravity CLI (Interactive Mode) ===",
+  "special_commands_label": "Type your messages. Special commands:",
+  "command_exit_desc": "Exit the CLI",
+  "command_reset_desc": "Reset conversation history",
+  "prompt_you": "You > ",
+  "exiting": "Exiting...",
+  "conversation_history_cleared": "Conversation history cleared!",
+  "error_during_conversation": "Error during conversation: {error}"
+}

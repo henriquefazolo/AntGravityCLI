@@ -1,0 +1,8 @@
+{
+  "file_content_header": "=== CONTEÚDO DO ARQUIVO: {filename} ({filepath}) ===",
+  "error_reading_file": "[Erro ao ler o arquivo {filepath}: {error}]",
+  "directory_listing_header": "=== LISTAGEM DO DIRETÓRIO: {filepath} ===",
+  "error_listing_directory": "[Erro ao listar diretório {filepath}: {error}]",
+  "skill_instructions_header": "=== INSTRUÇÕES DA SKILL: {skill_name} ===",
+  "error_loading_skill": "[Erro ao carregar a skill {skill_name}: {error}]"
+}
