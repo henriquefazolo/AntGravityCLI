@@ -1,142 +1,141 @@
-# Antigravity CLI Portable
+# AntGravity CLI
 
-Uma interface de linha de comando (CLI) portátil e interativa desenvolvida em Python para interagir de forma flexível com os agentes do ecossistema **Google Antigravity**.
+A portable and interactive command-line interface (CLI) developed in Python to flexibly interact with agents from the **Google Antigravity** ecosystem.
 
-## Requisitos
+## Requirements
 
-- Python 3.11.7 (conforme configurado no ambiente de desenvolvimento).
-- Dependências instaladas (incluindo `google-antigravity`, `click`, `colorama`, `python-dotenv`).
+- Python 3.11.7 (as configured in the development environment).
+- Installed dependencies (including `google-antigravity`, `click`, `colorama`, `python-dotenv`).
 
-## Instalação e Configuração
+## Installation and Setup
 
-1. Certifique-se de estar com o ambiente virtual ativado:
+1. Make sure the virtual environment is activated:
    ```powershell
    .\.venv\Scripts\activate
    ```
-2. Defina a chave de API do Gemini criando um arquivo `.env` na raiz do projeto:
+2. Set the Gemini API key by creating a `.env` file at the root of the project:
    ```env
-   GEMINI_API_KEY=sua_chave_de_api_aqui
+   GEMINI_API_KEY=your_api_key_here
    ```
-   *(Ou passe via flag `--api-key` nas execuções).*
+   *(Or pass it via the `--api-key` flag during executions).*
 
 ---
 
-## Como Usar
+## How to Use
 
-### 1. Modo Prompt Único
-Para enviar um prompt e receber a resposta diretamente:
+### 1. Single Prompt Mode
+To send a prompt and receive the response directly:
 ```powershell
-python main.py "Escreva uma saudação em Python"
+python main.py "Write a greeting in Python"
 ```
 
-### 2. Modo Interativo (REPL)
-Para iniciar um chat contínuo com o agente (que mantém o histórico da sessão):
+### 2. Interactive Mode (REPL)
+To start a continuous chat with the agent (which maintains session history):
 ```powershell
 python main.py
 ```
-**Comandos úteis no Modo Interativo:**
-- `/reset`: Limpa o histórico da conversa e redefine o contexto do agente.
-- `/exit` ou `/quit`: Encerra o terminal interativo.
+**Useful commands in Interactive Mode:**
+- `/reset`: Clears conversation history and resets agent context.
+- `/exit` or `/quit`: Closes the interactive terminal.
 
-### 3. Modo Seguro (Safe Mode) vs Modo YOLO
-- **Modo Seguro (Padrão)**: Sempre que o agente tentar executar comandos de terminal perigosos (como a ferramenta `RUN_COMMAND`), o CLI solicitará a sua permissão no console (`[y/N]`) antes de prosseguir.
-- **Modo YOLO (`-y` / `--yolo`)**: Desativa todas as confirmações de segurança e executa todas as ações de forma autônoma.
+### 3. Safe Mode vs YOLO Mode
+- **Safe Mode (Default)**: Whenever the agent tries to run risky terminal commands (like the `RUN_COMMAND` tool), the CLI will request your permission in the console (`[y/N]`) before proceeding.
+- **YOLO Mode (`-y` / `--yolo`)**: Disables all safety confirmations and executes all actions autonomously.
   ```powershell
-  python main.py -y "Crie uma pasta chamada teste e liste o diretório"
+  python main.py -y "Create a folder named test and list the directory"
   ```
 
 ---
 
-## Opções Disponíveis
+## Available Options
 
-Você pode personalizar o comportamento do CLI através de flags:
+You can customize the CLI behavior using flags:
 
-| Flag | Atalho | Descrição |
+| Flag | Shortcut | Description |
 | :--- | :--- | :--- |
-| `--model` | `-m` | Especifica o modelo do Gemini (padrão: `gemini-3.5-flash`). |
-| `--yolo` | `-y` | Pula todas as permissões/confirmações e roda tudo livremente. |
-| `--workspace` | `-w` | Restringe ferramentas de arquivos a um diretório específico (pode ser repetido). |
-| `--system-instruction` | `-s` | Texto com instruções personalizadas de sistema ou o caminho de um arquivo de texto. |
-| `--api-key` | | Informa a chave de API diretamente na linha de comando. |
-| `--skills-path` | `-k` | Caminho para pastas de skills (pode ser repetido). Caso não informado e a pasta `./skills` exista, ela será carregada por padrão. |
-| `--silent` | | Oculta os pensamentos internos e as chamadas de ferramentas no terminal. |
-| `--verbose` | `-v` | Exibe os pensamentos internos de raciocínio da IA (Chain of Thought) em cinza no console. |
+| `--model` | `-m` | Specifies the Gemini model (default: `gemini-3.5-flash`). |
+| `--yolo` | `-y` | Skips all permissions/confirmations and runs everything freely. |
+| `--workspace` | `-w` | Restricts file tools to a specific directory (can be repeated). |
+| `--system-instruction` | `-s` | Text with custom system instructions or path to a text file. |
+| `--api-key` | | Passes the API key directly on the command line. |
+| `--skills-path` | `-k` | Path to skills folders (can be repeated). If not provided and the `./skills` folder exists, it will be loaded by default. |
+| `--silent` | | Hides internal thoughts and tool calls in the terminal. |
+| `--verbose` | `-v` | Displays the AI's internal reasoning thoughts (Chain of Thought) in gray on the console. |
 
-Exemplo de uso avançado:
+Advanced usage example:
 ```powershell
-python main.py -m gemini-3.5-flash -y -s "Você é um assistente conciso que fala em espanhol" "Olá!"
+python main.py -m gemini-3.5-flash -y -s "You are a concise assistant speaking Spanish" "Hello!"
 ```
 
 ---
 
-## Personalização e Configurações (`.agents`)
+## Customization and Settings (`.agents`)
 
-A pasta `.agents` na raiz do seu projeto é a pasta de **Personalização Local do Workspace**. Através dela, você pode definir regras, criar novas habilidades ("skills") e customizar as respostas do agente.
+The `.agents` folder at the root of your project is the **Local Workspace Customization** folder. Through it, you can define rules, create new skills, and customize agent responses.
 
-### Estrutura Completa de `.agents`
+### Complete Structure of `.agents`
 
 ```text
-meu-projeto/
+my-project/
 └── .agents/
-    ├── AGENTS.md                  # Regras e diretrizes gerais do projeto
-    ├── skills.json                # (Opcional) Configuração e registro de habilidades
-    └── skills/                    # Pasta contendo habilidades específicas
-        └── gerenciar_deploy/      # Exemplo de uma habilidade
-            ├── SKILL.md           # Instruções e gatilhos da habilidade (Obrigatório)
-            ├── scripts/           # Scripts de apoio
-            ├── examples/          # Exemplos de uso/código
-            └── references/        # Documentações de referência
+    ├── AGENTS.md                  # Project rules and guidelines
+    ├── skills.json                # (Optional) Skills configuration and registration
+    └── skills/                    # Folder containing specific skills
+        └── gerenciar_deploy/      # Example of a skill
+            ├── SKILL.md           # Skill instructions and triggers (Required)
+            ├── scripts/           # Supporting scripts
+            ├── examples/          # Usage/code examples
+            └── references/        # Reference documentation
 ```
 
-### 1. Regras do Projeto (`AGENTS.md`)
-O arquivo `.agents/AGENTS.md` define as regras gerais de comportamento, estilo e restrições técnicas que o agente deve seguir neste projeto (ex: padrão de código, idioma, frameworks preferidos).
+### 1. Project Rules (`AGENTS.md`)
+The `.agents/AGENTS.md` file defines the general rules of behavior, style, and technical constraints that the agent must follow in this project (e.g., code pattern, language, preferred frameworks).
 
-*Há também o escopo global em `C:\Users\<usuario>\.gemini\config\AGENTS.md` para regras que valem para todo o computador.*
+*There is also the global scope at `C:\Users\<user>\.gemini\config\AGENTS.md` for rules that apply to the entire machine.*
 
-### 2. Habilidades (`skills/`)
-As **Skills** são pacotes de comportamento e ferramentas carregados dinamicamente dependendo do contexto da conversa ou solicitação do usuário.
+### 2. Skills (`skills/`)
+**Skills** are packages of behavior and tools dynamically loaded depending on conversation context or user request.
 
-*   **O arquivo `SKILL.md` (Obrigatório)**:
-    Define os metadados em YAML (usados pela IA para a ativação automática) e o corpo com as instruções da habilidade:
+*   **The `SKILL.md` file (Required)**:
+    Defines YAML metadata (used by the AI for auto-activation) and the body with the skill instructions:
     ```markdown
     ---
-    name: "Ferramentas Utilitárias de Desenvolvimento"
-    description: "Útil para qualquer tarefa geral de desenvolvimento, automação, script ou consulta do workspace."
+    name: "Utility Development Tools"
+    description: "Useful for any general development, automation, scripting, or workspace query task."
     ---
 
-    # Instruções da Habilidade
-    Sempre que o usuário solicitar uma automação ou execução de script:
-    1. Analise o prompt e utilize as ferramentas em `scripts/` correspondentes.
-    2. Explique o resultado da execução ao final.
+    # Skill Instructions
+    Whenever the user requests an automation or script execution:
+    1. Analyze the prompt and use the corresponding tools in `scripts/`.
+    2. Explain the execution result at the end.
     ```
 *   **Scripts (`scripts/`)**:
-    Qualquer script executável inserido na pasta `scripts/` será exposto automaticamente como uma ferramenta que o agente pode rodar (ex: `gerenciar_deploy.nome_do_script`).
+    Any executable script inserted in the `scripts/` folder will be automatically exposed as a tool that the agent can run (e.g., `gerenciar_deploy.script_name`).
 
-### 3. Registro de Habilidades (`skills.json`)
-O arquivo `skills.json` na raiz da pasta `.agents/` permite herdar habilidades de outros diretórios compartilhados ou desativar habilidades padrão:
+### 3. Skills Registration (`skills.json`)
+The `skills.json` file at the root of the `.agents/` folder allows inheriting skills from other shared directories or disabling default skills:
 ```json
 {
   "entries": [
-    { "path": "caminho/para/skills/externas" }
+    { "path": "path/to/external/skills" }
   ],
   "exclude": [
-    "nome_da_skill_para_ignorar"
+    "skill_name_to_ignore"
   ]
 }
 ```
 
 ---
 
-## Personalidade e Instruções do Agente
+## Agent Personality and Instructions
 
-A personalidade, o tom de voz e as diretrizes de comportamento do agente são resolvidos em múltiplos níveis de precedência:
+The agent's personality, tone of voice, and behavioral guidelines are resolved at multiple levels of precedence:
 
-1. **Flag de Inicialização (`-s` / `--system-instruction`)**:
-   Define as instruções de sistema diretamente na execução do comando (texto livre ou caminho de arquivo).
-2. **Regras Locais e Globais (`AGENTS.md`)**:
-   Lidas a partir de `.agents/AGENTS.md` (local) e de `C:\Users\<usuario>\.gemini\config\AGENTS.md` (global).
-3. **Instruções de Habilidades (`SKILL.md`)**:
-   Mescladas ao contexto do chat quando a skill correspondente é ativada.
-4. **Personalidade Padrão (Fallback)**:
-   Se nenhuma instrução for fornecida, assume o perfil padrão do ecossistema Google Antigravity.
-
+1. **Initialization Flag (`-s` / `--system-instruction`)**:
+   Defines system instructions directly in command execution (free text or file path).
+2. **Local and Global Rules (`AGENTS.md`)**:
+   Read from `.agents/AGENTS.md` (local) and `C:\Users\<user>\.gemini\config\AGENTS.md` (global).
+3. **Skill Instructions (`SKILL.md`)**:
+   Merged into the chat context when the corresponding skill is activated.
+4. **Default Personality (Fallback)**:
+   If no instruction is provided, assumes the default profile of the Google Antigravity ecosystem.
