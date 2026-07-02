@@ -1,0 +1,97 @@
+import os
+import re
+from typing import Tuple, List
+from interfaces import DirectiveProcessor
+
+class FileDirectiveProcessor(DirectiveProcessor):
+    """Processador de diretivas de arquivos e pastas com o prefixo '@' (SRP/OCP/LSP)."""
+    
+    def process(self, prompt: str, skills_paths: list[str] = None) -> Tuple[str, list[str]]:
+        extra_context = []
+        # Aceita @[caminho com espaços] ou @caminho_sem_espaços (evita emails)
+        file_matches = re.finditer(r'(?<!\w)@(?:\[([^\]]+)\]|([^\s\x00-\x1F\x7F]+))', prompt)
+        files_to_inject = []
+        for match in file_matches:
+            path = match.group(1) or match.group(2)
+            # Limpar pontuações comuns no final do caminho sem colchetes
+            if not match.group(1):
+                path = re.sub(r'[.,;:!?)]+$', '', path)
+            files_to_inject.append(path)
+
+        for filepath in files_to_inject:
+            if os.path.isfile(filepath):
+                try:
+                    with open(filepath, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    extra_context.append(f"=== CONTEÚDO DO ARQUIVO: {os.path.basename(filepath)} ({filepath}) ===\n{content}\n")
+                except Exception as e:
+                    extra_context.append(f"[Erro ao ler o arquivo {filepath}: {e}]\n")
+            elif os.path.isdir(filepath):
+                try:
+                    entries = os.listdir(filepath)
+                    content = "\n".join(entries)
+                    extra_context.append(f"=== LISTAGEM DO DIRETÓRIO: {filepath} ===\n{content}\n")
+                except Exception as e:
+                    extra_context.append(f"[Erro ao listar diretório {filepath}: {e}]\n")
+                    
+        return prompt, extra_context
+
+
+class SkillDirectiveProcessor(DirectiveProcessor):
+    """Processador de diretivas de skills com o prefixo '/' (SRP/OCP/LSP)."""
+    
+    def process(self, prompt: str, skills_paths: list[str] = None) -> Tuple[str, list[str]]:
+        extra_context = []
+        # Ignora comandos especiais do REPL (/exit, /quit, /reset)
+        skill_matches = re.finditer(r'(?<!\w)/([a-zA-Z0-9_-]+)', prompt)
+        skills_to_inject = []
+        for match in skill_matches:
+            skill_name = match.group(1)
+            if skill_name in ("exit", "quit", "reset"):
+                continue
+            skills_to_inject.append(skill_name)
+
+        for skill_name in skills_to_inject:
+            paths_to_search = skills_paths or []
+            if not paths_to_search:
+                paths_to_search = ["skills", ".agents/skills"]
+            for base_path in paths_to_search:
+                skill_dir = os.path.join(base_path, skill_name)
+                skill_md_path = os.path.join(skill_dir, "SKILL.md")
+                if os.path.isfile(skill_md_path):
+                    try:
+                        with open(skill_md_path, "r", encoding="utf-8") as f:
+                            content = f.read()
+                        extra_context.append(f"=== INSTRUÇÕES DA SKILL: {skill_name} ===\n{content}\n")
+                        break
+                    except Exception as e:
+                        extra_context.append(f"[Erro ao carregar a skill {skill_name}: {e}]\n")
+                        
+        return prompt, extra_context
+
+
+class PromptPreprocessor:
+    """Orquestrador do pré-processamento do prompt (SRP/OCP)."""
+    
+    def __init__(self, processors: list[DirectiveProcessor] = None):
+        self._processors = processors if processors is not None else [
+            FileDirectiveProcessor(),
+            SkillDirectiveProcessor()
+        ]
+
+    def preprocess(self, prompt: str, skills_paths: list[str] = None) -> str:
+        aggregated_context = []
+        current_prompt = prompt
+        for processor in self._processors:
+            current_prompt, extra_context = processor.process(current_prompt, skills_paths)
+            aggregated_context.extend(extra_context)
+            
+        if aggregated_context:
+            return current_prompt + "\n\n" + "\n".join(aggregated_context)
+        return current_prompt
+
+
+# Wrapper de compatibilidade funcional
+def preprocess_prompt(prompt: str, skills_paths: list[str] = None) -> str:
+    """Wrapper funcional compatível com versões anteriores."""
+    return PromptPreprocessor().preprocess(prompt, skills_paths)
