@@ -2,17 +2,17 @@ from abc import ABC, abstractmethod
 from typing import Tuple, List
 
 class DirectiveProcessor(ABC):
-    """Interface base para processadores de diretivas em prompts (LSP/OCP)."""
+    """Base interface for prompt directive processors (LSP/OCP)."""
     @abstractmethod
     def process(self, prompt: str, skills_paths: list[str] = None) -> Tuple[str, list[str]]:
         """
-        Processa o prompt e retorna uma tupla com o prompt atualizado e uma lista
-        de strings contendo o contexto extra a ser injetado.
+        Processes the prompt and returns a tuple containing the updated prompt and a list
+        of strings containing the extra context to be injected.
         """
         pass
 
 class OutputWriter(ABC):
-    """Interface base para saídas de comunicação do agente (DIP/ISP)."""
+    """Base interface for agent communication outputs (DIP/ISP)."""
     @abstractmethod
     def write_thought(self, text: str) -> None:
         pass
@@ -29,16 +29,16 @@ class OutputWriter(ABC):
     def write_tool_result(self, name: str, result: str, error: str = None) -> None:
         pass
 
-    def start_loading(self, message: str = "Pensando...") -> None:
-        """Inicia um indicador visual de processamento (opcional)."""
+    def start_loading(self, message: str = "Thinking...") -> None:
+        """Starts a visual processing indicator (optional)."""
         pass
 
     def stop_loading(self) -> None:
-        """Para o indicador visual de processamento (opcional)."""
+        """Stops the visual processing indicator (optional)."""
         pass
 
 class InputReader(ABC):
-    """Interface base para entrada de texto do usuário (DIP/ISP)."""
+    """Base interface for user text input (DIP/ISP)."""
     @abstractmethod
     async def read_input(self, prompt_text: str, suggestions: list[str] = None) -> str:
         pass

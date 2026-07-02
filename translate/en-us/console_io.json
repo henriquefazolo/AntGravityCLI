@@ -1,0 +1,6 @@
+{
+  "thinking": "Thinking",
+  "tool_calling": "[Tool] Calling: {name} with {args}",
+  "tool_error": "[Tool] Error in {name}: {error}",
+  "tool_result": "[Tool] Result from {name}: {result}"
+}

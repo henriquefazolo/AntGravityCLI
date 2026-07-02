@@ -1,0 +1,6 @@
+{
+  "agent_wants_to_execute": "[?] O agente deseja executar a ferramenta: {name}",
+  "arguments": "    Argumentos: {args}",
+  "allow_execution": "    Permitir execução? [y/N]: ",
+  "denied_by_interruption": "    Negado por interrupção."
+}

@@ -1,0 +1,6 @@
+{
+  "thinking": "Pensando",
+  "tool_calling": "[Ferramenta] Chamando: {name} com {args}",
+  "tool_error": "[Ferramenta] Erro em {name}: {error}",
+  "tool_result": "[Ferramenta] Resultado de {name}: {result}"
+}

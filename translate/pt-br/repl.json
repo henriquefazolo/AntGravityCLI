@@ -1,0 +1,10 @@
+{
+  "repl_title": "=== AntGravity CLI (Modo Interativo) ===",
+  "special_commands_label": "Digite suas mensagens. Comandos especiais:",
+  "command_exit_desc": "Sair do CLI",
+  "command_reset_desc": "Reiniciar o histórico da conversa",
+  "prompt_you": "Você > ",
+  "exiting": "Saindo...",
+  "conversation_history_cleared": "Histórico da conversa limpo!",
+  "error_during_conversation": "Erro durante a conversação: {error}"
+}

@@ -4,6 +4,7 @@ from colorama import Fore, Style
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.live import Live
+import i18n
 from interfaces import OutputWriter, InputReader
 
 try:
@@ -14,11 +15,11 @@ try:
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
 
-# Inicializa colorama para suporte de cores no console (especialmente Windows)
+# Initialize colorama for console color support (especially Windows)
 colorama.init()
 
 class ConsoleOutputWriter(OutputWriter):
-    """Implementação concreta de escrita no terminal usando colorama e rich para Markdown (SRP)."""
+    """Concrete terminal output writer using colorama and rich for Markdown (SRP)."""
     def __init__(self):
         self._first_text = True
         self._console = Console(force_terminal=True)
@@ -34,12 +35,15 @@ class ConsoleOutputWriter(OutputWriter):
                 pass
             self._live = None
 
-    def start_loading(self, message: str = "Pensando") -> None:
-        """Inicia o indicador visual de processamento (animado via asyncio com fallback estático)."""
+    def start_loading(self, message: str = None) -> None:
+        """Starts the visual processing indicator (animated via asyncio with static fallback)."""
         self._stop_live()
         self.stop_loading()
         
-        # Remove pontos no final do message para que a animação controle o fluxo de pontinhos
+        if message is None:
+            message = i18n.t("console_io", "thinking")
+        
+        # Remove trailing periods from the message so the animation controls the flow of dots
         message = message.rstrip(".")
         self._loading_active = True
         try:
@@ -49,7 +53,7 @@ class ConsoleOutputWriter(OutputWriter):
             self._loading_task = None
 
     async def _animate_loading(self, message: str) -> None:
-        """Corrotina que anima a exibição de pontinhos crescentes de carregamento."""
+        """Coroutine that animates the growing loading dots."""
         dots = 0
         try:
             while self._loading_active:
@@ -61,28 +65,28 @@ class ConsoleOutputWriter(OutputWriter):
             pass
 
     def stop_loading(self) -> None:
-        """Encerra o indicador visual de processamento limpando a linha."""
+        """Stops the visual processing indicator and clears the line."""
         if getattr(self, '_loading_active', False):
             self._loading_active = False
             if hasattr(self, '_loading_task') and self._loading_task:
                 self._loading_task.cancel()
                 self._loading_task = None
-            # Limpa a palavra imprimindo espaços por cima usando retorno de carro
+            # Clear the line by overwriting it with spaces using carriage return
             print("\r" + " " * 40 + "\r", end="", flush=True)
 
     def write_thought(self, text: str) -> None:
         self.stop_loading()
         self._stop_live()
-        # Pensamentos em tom cinza/itálico usando rich
+        # Thoughts in dim/italic tone using rich
         self._console.print(f"[dim]{text}[/dim]", end="", highlight=False)
 
     def write_text(self, text: str) -> None:
         self.stop_loading()
         if self._first_text:
-            self._console.print(f"\n[bold magenta]Antigravity > [/bold magenta]")
+            self._console.print(f"\n[bold magenta]AntGravity > [/bold magenta]")
             self._first_text = False
             self._text_buffer = ""
-            # Inicializa a renderização em tempo real (Live) do Markdown
+            # Initializes real-time (Live) Markdown rendering
             self._live = Live(Markdown(self._text_buffer), console=self._console, auto_refresh=True)
             self._live.start()
         
@@ -93,18 +97,18 @@ class ConsoleOutputWriter(OutputWriter):
     def write_tool_call(self, name: str, args: dict) -> None:
         self.stop_loading()
         self._stop_live()
-        self._console.print(f"\n[yellow][Ferramenta] Chamando: {name} com {args}[/yellow]")
+        self._console.print(f"\n[yellow]{i18n.t('console_io', 'tool_calling', name=name, args=args)}[/yellow]")
 
     def write_tool_result(self, name: str, result: str, error: str = None) -> None:
         self.stop_loading()
         self._stop_live()
         if error:
-            self._console.print(f"\n[red][Ferramenta] Erro em {name}: {error}[/red]")
+            self._console.print(f"\n[red]{i18n.t('console_io', 'tool_error', name=name, error=error)}[/red]")
         else:
-            self._console.print(f"\n[blue][Ferramenta] Resultado de {name}: {result}[/blue]")
+            self._console.print(f"\n[blue]{i18n.t('console_io', 'tool_result', name=name, result=result)}[/blue]")
 
     def reset(self) -> None:
-        """Reseta o estado do escritor para nova stream de texto."""
+        """Resets the writer state for a new text stream."""
         self.stop_loading()
         self._stop_live()
         self._first_text = True
@@ -112,7 +116,7 @@ class ConsoleOutputWriter(OutputWriter):
 
 
 class ConsoleInputReader(InputReader):
-    """Implementação concreta de leitura do terminal usando input() ou prompt_toolkit (SRP)."""
+    """Concrete terminal input reader using input() or prompt_toolkit (SRP)."""
     def __init__(self):
         self._session = None
 
@@ -121,17 +125,17 @@ class ConsoleInputReader(InputReader):
         
         if HAS_PROMPT_TOOLKIT and suggestions:
             try:
-                # Inicializa a sessão sob demanda para não falhar na instanciação em testes ou CI/CD
+                # Initialize the session on-demand to avoid failure during instantiation in tests or CI/CD
                 if self._session is None:
                     self._session = PromptSession()
                 
                 completer = WordCompleter(suggestions, ignore_case=True)
-                # Usa a sessão assíncrona do prompt_toolkit integrada ao asyncio
+                # Use prompt_toolkit's async session integrated with asyncio
                 return (await self._session.prompt_async(ANSI(prompt_with_color), completer=completer)).strip()
             except (KeyboardInterrupt, EOFError):
                 raise
             except Exception:
-                # Fallback seguro para input() nativo em qualquer caso de erro do prompt_toolkit (ex: NoConsoleScreenBufferError)
+                # Safe fallback to native input() in case of prompt_toolkit errors (e.g. NoConsoleScreenBufferError)
                 return input(prompt_with_color).strip()
         else:
             return input(prompt_with_color).strip()

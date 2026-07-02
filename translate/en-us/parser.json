@@ -1,0 +1,8 @@
+{
+  "file_content_header": "=== FILE CONTENT: {filename} ({filepath}) ===",
+  "error_reading_file": "[Error reading file {filepath}: {error}]",
+  "directory_listing_header": "=== DIRECTORY LISTING: {filepath} ===",
+  "error_listing_directory": "[Error listing directory {filepath}: {error}]",
+  "skill_instructions_header": "=== SKILL INSTRUCTIONS: {skill_name} ===",
+  "error_loading_skill": "[Error loading skill {skill_name}: {error}]"
+}
