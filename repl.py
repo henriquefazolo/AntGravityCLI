@@ -75,6 +75,7 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
     suggestions = _get_repl_suggestions(resolved_skills)
     
     # Render Option 1 colorized solid block ant art logo
+    click.echo("")
     click.echo(f"  {Fore.CYAN}▄▀▀▄       ▄▀▀▄{Style.RESET_ALL}")
     click.echo(f"   {Fore.CYAN}▀▄ ▀▄   ▄▀ ▄▀{Style.RESET_ALL}")
     click.echo(f"    {Fore.BLUE}▄█████████▄{Style.RESET_ALL}")

@@ -17,11 +17,28 @@ A portable and interactive command-line interface (CLI) developed in Python to f
    ```powershell
    .\.venv\Scripts\activate
    ```
-2. Set the Gemini API key by creating a `.env` file at the root of the project:
-   ```env
-   GEMINI_API_KEY=your_api_key_here
+2. Configure your environment using a `.env` file. You can copy the template from [.env.example](file:///.env.example) to get started:
+   ```powershell
+   cp .env.example .env
    ```
-   *(Or pass it via the `--api-key` flag during executions).*
+
+### Environment Resolution and Default Values
+
+The CLI loads configurations from `.env` files in two stages:
+1. **Physical CLI script installation folder**: Loads `.env` for global default configuration.
+2. **Current Working Directory (CWD)**: Loads `.env` for workspace-specific configurations (which override the global ones).
+
+If a `.env` file is not present or a specific variable is not set, the CLI falls back to the following default values:
+
+| Environment Variable | CLI Option | Description | Default Value |
+| :--- | :--- | :--- | :--- |
+| `GEMINI_API_KEY` | `--api-key` | Gemini API Key | *None (Required)* |
+| `GEMINI_MODEL` | `--model` / `-m` | Gemini Model to be used | `gemini-3.1-flash-lite` |
+| `ANTGRAVITY_LANG` | `--language` / `-l` | CLI UI Language | `en-us` |
+| `ANTGRAVITY_YOLO` | `--yolo` / `-y` | Run in YOLO (Safe-bypass) Mode | `False` (Safe Mode) |
+
+*(You can always override these values dynamically by passing their respective flags on the command line).*
+
 
 ---
 
@@ -67,17 +84,17 @@ python list_skills.py
 
 You can customize the CLI behavior using flags:
 
-| Flag | Shortcut | Description |
-| :--- | :--- | :--- |
-| `--model` | `-m` | Specifies the Gemini model (default: `gemini-3.5-flash`). |
-| `--yolo` | `-y` | Skips all permissions/confirmations and runs everything freely. |
-| `--workspace` | `-w` | Restricts file tools to a specific directory (can be repeated). |
-| `--system-instruction` | `-s` | Text with custom system instructions or path to a text file. |
-| `--api-key` | | Passes the API key directly on the command line. |
-| `--skills-path` | `-k` | Path to skills folders (can be repeated). If not provided and the `./skills` folder exists, it will be loaded by default. |
-| `--silent` | | Hides internal thoughts and tool calls in the terminal. |
-| `--verbose` | `-v` | Displays the AI's internal reasoning thoughts (Chain of Thought) in gray on the console. |
-| `--language` | `-l` | Specifies the output translation language (default: `en-us`, e.g. `pt-br`, `en-us`). |
+| Flag | Shortcut | Env Variable | Description |
+| :--- | :--- | :--- | :--- |
+| `--model` | `-m` | `GEMINI_MODEL` | Specifies the Gemini model (default: `gemini-3.1-flash-lite`). |
+| `--yolo` | `-y` | `ANTGRAVITY_YOLO` | Skips all permissions/confirmations and runs everything freely. |
+| `--workspace` | `-w` | | Restricts file tools to a specific directory (can be repeated). |
+| `--system-instruction` | `-s` | | Text with custom system instructions or path to a text file. |
+| `--api-key` | | `GEMINI_API_KEY` | Passes the API key directly on the command line. |
+| `--skills-path` | `-k` | | Path to skills folders (can be repeated). If not provided and the `./skills` folder exists, it will be loaded by default. |
+| `--silent` | | | Hides internal thoughts and tool calls in the terminal. |
+| `--verbose` | `-v` | | Displays the AI's internal reasoning thoughts (Chain of Thought) in gray on the console. |
+| `--language` | `-l` | `ANTGRAVITY_LANG` | Specifies the output translation language (default: `en-us`, e.g. `pt-br`, `en-us`). |
 
 Advanced usage example:
 ```powershell
