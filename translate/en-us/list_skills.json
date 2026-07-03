@@ -1,0 +1,5 @@
+{
+  "skills_header": "Available Skills in .agents/skills:",
+  "no_skills_found": "No skills found in .agents/skills.",
+  "directory_not_found": "Directory not found: {directory}"
+}

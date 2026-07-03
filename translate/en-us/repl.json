@@ -6,5 +6,7 @@
   "prompt_you": "You > ",
   "exiting": "Exiting...",
   "conversation_history_cleared": "Conversation history cleared!",
-  "error_during_conversation": "Error during conversation: {error}"
+  "error_during_conversation": "Error during conversation: {error}",
+  "and_more": "and more",
+  "skills_label": "Skills"
 }

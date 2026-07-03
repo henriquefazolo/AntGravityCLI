@@ -25,7 +25,8 @@ class ConsoleOutputWriter(OutputWriter):
         self._console = Console(force_terminal=True)
         self._text_buffer = ""
         self._live = None
-        self._loading_status = None
+        self._loading_active = False
+        self._loading_task = None
 
     def _stop_live(self) -> None:
         if self._live:
@@ -66,9 +67,9 @@ class ConsoleOutputWriter(OutputWriter):
 
     def stop_loading(self) -> None:
         """Stops the visual processing indicator and clears the line."""
-        if getattr(self, '_loading_active', False):
+        if self._loading_active:
             self._loading_active = False
-            if hasattr(self, '_loading_task') and self._loading_task:
+            if self._loading_task:
                 self._loading_task.cancel()
                 self._loading_task = None
             # Clear the line by overwriting it with spaces using carriage return
@@ -129,9 +130,13 @@ class ConsoleInputReader(InputReader):
                 if self._session is None:
                     self._session = PromptSession()
                 
-                completer = WordCompleter(suggestions, ignore_case=True)
+                completer = WordCompleter(suggestions, ignore_case=True, WORD=True)
                 # Use prompt_toolkit's async session integrated with asyncio
-                return (await self._session.prompt_async(ANSI(prompt_with_color), completer=completer)).strip()
+                return (await self._session.prompt_async(
+                    ANSI(prompt_with_color),
+                    completer=completer,
+                    complete_while_typing=True
+                )).strip()
             except (KeyboardInterrupt, EOFError):
                 raise
             except Exception:
