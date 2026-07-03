@@ -49,6 +49,32 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertIn("C:\\some\\other\\path", config.skills_paths)
         self.assertTrue(config.skills_paths[1].endswith(os.path.join(".agents", "skills")))
 
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "dummy_key"})
+    def test_setup_agent_config_skills_normalization(self):
+        """Verify that setup_agent_config normalizes skills paths to absolute paths and deduplicates them."""
+        # Mix of relative, absolute, and duplicate paths
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        cli_skills_dir = os.path.join(base_dir, ".agents", "skills")
+        
+        config = setup_agent_config(
+            model="gemini-3.5-flash",
+            yolo=False,
+            workspace=["."],
+            system_instruction=None,
+            api_key=None,
+            skills_path=[
+                ".",
+                os.path.abspath("."),
+                "./.agents/skills",
+                cli_skills_dir
+            ]
+        )
+        self.assertIsNotNone(config.skills_paths)
+        # Deduplicated output length should be 2: absolute path of '.' and absolute path of '.agents/skills'
+        self.assertEqual(len(config.skills_paths), 2)
+        self.assertEqual(config.skills_paths[0], os.path.abspath("."))
+        self.assertEqual(config.skills_paths[1], cli_skills_dir)
+
     @patch('builtins.input', return_value='y')
     def test_cli_ask_user_handler_approve(self, mock_input):
         """Verify that the policy manager accepts 'y' for user confirmation."""
