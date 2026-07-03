@@ -90,6 +90,22 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
             self.assertEqual(res, "Hello {name}") # Returns raw message
             self.assertIn("Format arguments mismatch", str(w.warning))
 
+    def test_utils_get_base_path_frozen(self):
+        """Verify that get_base_path returns sys._MEIPASS when running as frozen executable."""
+        import sys
+        import utils
+        
+        # 1. Normal execution (unfrozen)
+        with patch.object(sys, 'frozen', False, create=True):
+            normal_path = utils.get_base_path()
+            self.assertEqual(normal_path, os.path.dirname(os.path.abspath(utils.__file__)))
+            
+        # 2. Standalone frozen execution
+        with patch.object(sys, 'frozen', True, create=True), \
+             patch.object(sys, '_MEIPASS', "C:\\mock_meipass", create=True):
+            frozen_path = utils.get_base_path()
+            self.assertEqual(frozen_path, "C:\\mock_meipass")
+
     @patch('builtins.input', return_value='y')
     def test_cli_ask_user_handler_approve(self, mock_input):
         """Verify that the policy manager accepts 'y' for user confirmation."""

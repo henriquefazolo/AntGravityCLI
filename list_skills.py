@@ -20,7 +20,8 @@ def discover_skills_in_paths(paths: list[str]) -> list[str]:
 
 def get_skills() -> list[str]:
     """Returns a sorted list of directory names inside .agents/skills."""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    from utils import get_base_path
+    base_dir = get_base_path()
     skills_dir = os.path.join(base_dir, ".agents", "skills")
     return discover_skills_in_paths([skills_dir])
 
@@ -31,7 +32,8 @@ def main() -> None:
     i18n.set_language(lang)
 
     # Path to the local agent skills directory
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    from utils import get_base_path
+    base_dir = get_base_path()
     skills_dir = os.path.join(base_dir, ".agents", "skills")
 
     if not os.path.isdir(skills_dir):

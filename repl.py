@@ -45,7 +45,8 @@ def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
     suggestions = ["/exit", "/quit", "/reset"]
     
     # Resolve script's installation folder directory to load internal CLI skills
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    from utils import get_base_path
+    base_dir = get_base_path()
     cli_skills_dir = os.path.join(base_dir, ".agents", "skills")
     
     paths_to_search = list(skills_paths) if skills_paths else []
