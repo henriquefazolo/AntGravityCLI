@@ -269,12 +269,12 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         suggestions_empty = _get_repl_suggestions([])
         self.assertIn("/gerar_skill_template", suggestions_empty)
 
-    def test_word_completer_word_param_filtering(self):
-        """Verify that WordCompleter with WORD=True handles backspaces and filters commands properly."""
-        from prompt_toolkit.completion import WordCompleter
+    def test_command_completer_pattern_backspace_and_filtering(self):
+        """Verify that CommandCompleter with _PATTERN_CMD handles backspaces, spaces, middle of line slash, and filters commands properly."""
+        from console_io import _PATTERN_CMD, CommandCompleter
         from prompt_toolkit.document import Document
         
-        completer = WordCompleter(["/exit", "/quit", "/reset", "/gerar_skill_template", "/gerenciar_deploy"], ignore_case=True, WORD=True)
+        completer = CommandCompleter(["/exit", "/quit", "/reset", "/gerar_skill_template", "/gerenciar_deploy"], ignore_case=True, pattern=_PATTERN_CMD)
         
         # Test exact match of command typed completely
         doc1 = Document("/gerar")
@@ -299,6 +299,18 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         doc4 = Document("gerar")
         completions4 = list(completer.get_completions(doc4, None))
         self.assertEqual(len(completions4), 0)
+
+        # Test trailing space input does not trigger suggestions (fixes space bug)
+        doc5 = Document("Olá ")
+        completions5 = list(completer.get_completions(doc5, None))
+        self.assertEqual(len(completions5), 0)
+
+        # Test middle of the line slash command suggestion (middle matching)
+        doc6 = Document("Olá /ger")
+        completions6 = list(completer.get_completions(doc6, None))
+        self.assertEqual(len(completions6), 2)
+        self.assertIn("/gerar_skill_template", [c.text for c in completions6])
+        self.assertIn("/gerenciar_deploy", [c.text for c in completions6])
 
 if __name__ == '__main__':
     unittest.main()

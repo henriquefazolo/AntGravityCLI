@@ -1,4 +1,5 @@
 import asyncio
+import re
 import colorama
 from colorama import Fore, Style
 from rich.console import Console
@@ -14,6 +15,26 @@ try:
     HAS_PROMPT_TOOLKIT = True
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
+
+if HAS_PROMPT_TOOLKIT:
+    # Pattern to match slash commands as a single word in prompt-toolkit
+    _PATTERN_CMD = re.compile(r'/[a-zA-Z0-9_-]*')
+
+    class CommandCompleter(WordCompleter):
+        """Custom WordCompleter that triggers only when the word before cursor starts with a slash '/'."""
+        def get_completions(self, document, complete_event):
+            word_before_cursor = ""
+            if self.pattern:
+                matches = list(self.pattern.finditer(document.text_before_cursor))
+                if matches:
+                    match = matches[-1]
+                    if match.end() == len(document.text_before_cursor):
+                        word_before_cursor = match.group()
+            
+            if not word_before_cursor.startswith('/'):
+                return
+                
+            yield from super().get_completions(document, complete_event)
 
 # Initialize colorama for console color support (especially Windows)
 colorama.init()
@@ -130,7 +151,7 @@ class ConsoleInputReader(InputReader):
                 if self._session is None:
                     self._session = PromptSession()
                 
-                completer = WordCompleter(suggestions, ignore_case=True, WORD=True)
+                completer = CommandCompleter(suggestions, ignore_case=True, pattern=_PATTERN_CMD)
                 # Use prompt_toolkit's async session integrated with asyncio
                 return (await self._session.prompt_async(
                     ANSI(prompt_with_color),
