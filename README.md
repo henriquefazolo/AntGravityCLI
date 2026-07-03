@@ -1,5 +1,9 @@
 # AntGravity CLI
 
+<p align="center">
+  <img src=".img/ant%20gravity.png" alt="AntGravity CLI Logo" width="400">
+</p>
+
 A portable and interactive command-line interface (CLI) developed in Python to flexibly interact with agents from the **Google Antigravity** ecosystem.
 
 ## Requirements
@@ -38,12 +42,23 @@ python main.py
 - `/reset`: Clears conversation history and resets agent context.
 - `/exit` or `/quit`: Closes the interactive terminal.
 
+**Auto-completion and Active Skills:**
+* **Real-time Auto-completion**: As you type `/` in the prompt (either at the start or mid-sentence), a dynamic dropdown menu displaying all special commands and active skills will instantly pop up. The auto-completion is case-insensitive, stays open stably when you delete characters (Backspace), and ignores regular chat text and trailing spaces to maintain a clean console.
+* **Banner Skills Listing**: At REPL startup, a welcome banner displays all available active workspace skills one per line, limited to 5. If more than 5 exist, a localized ellipsis (`... and more` or `... e mais`) is appended.
+
 ### 3. Safe Mode vs YOLO Mode
 - **Safe Mode (Default)**: Whenever the agent tries to run risky terminal commands (like the `RUN_COMMAND` tool), the CLI will request your permission in the console (`[y/N]`) before proceeding.
 - **YOLO Mode (`-y` / `--yolo`)**: Disables all safety confirmations and executes all actions autonomously.
   ```powershell
   python main.py -y "Create a folder named test and list the directory"
   ```
+
+### 4. Listing Available Skills
+You can quickly scan and list the names of all active local agent skills folders registered in `.agents/skills/` using the utility script:
+```powershell
+python list_skills.py
+```
+*(This script supports localization, reading the system language from the `ANTGRAVITY_LANG` environment variable).*
 
 ---
 
