@@ -24,9 +24,11 @@ A portable and interactive command-line interface (CLI) developed in Python to f
 
 ### Environment Resolution and Default Values
 
-The CLI loads configurations from `.env` files in two stages:
+The CLI resolves configuration by loading `.env` files. By default, it loads them in two stages:
 1. **Physical CLI script installation folder**: Loads `.env` for global default configuration.
 2. **Current Working Directory (CWD)**: Loads `.env` for workspace-specific configurations (which override the global ones).
+
+Alternatively, you can load a custom `.env` file using the `--env-file` / `-e` option. When a custom `.env` file is specified, the default `.env` files (global and CWD) are **not** loaded automatically, giving you full control over the variables.
 
 If a `.env` file is not present or a specific variable is not set, the CLI falls back to the following default values:
 
@@ -36,6 +38,11 @@ If a `.env` file is not present or a specific variable is not set, the CLI falls
 | `GEMINI_MODEL` | `--model` / `-m` | Gemini Model to be used | `gemini-3.1-flash-lite` |
 | `ANTGRAVITY_LANG` | `--language` / `-l` | CLI UI Language | `en-us` |
 | `ANTGRAVITY_YOLO` | `--yolo` / `-y` | Run in YOLO (Safe-bypass) Mode | `False` (Safe Mode) |
+| `ANTGRAVITY_WORKSPACE` | `--workspace` / `-w` | Restricted workspace paths | *None (Current CWD)* |
+| `ANTGRAVITY_SYSTEM_INSTRUCTION` | `--system-instruction` / `-s` | System instruction or path | *None* |
+| `ANTGRAVITY_SKILLS_PATH` | `--skills-path` / `-k` | Custom workspace skills folders | *None* |
+| `ANTGRAVITY_SILENT` | `--silent` | Hide thoughts and tool execution logs | `False` |
+| `ANTGRAVITY_VERBOSE` | `--verbose` / `-v` | Show internal reasoning details | `False` |
 
 *(You can always override these values dynamically by passing their respective flags on the command line).*
 
@@ -88,13 +95,14 @@ You can customize the CLI behavior using flags:
 | :--- | :--- | :--- | :--- |
 | `--model` | `-m` | `GEMINI_MODEL` | Specifies the Gemini model (default: `gemini-3.1-flash-lite`). |
 | `--yolo` | `-y` | `ANTGRAVITY_YOLO` | Skips all permissions/confirmations and runs everything freely. |
-| `--workspace` | `-w` | | Restricts file tools to a specific directory (can be repeated). |
-| `--system-instruction` | `-s` | | Text with custom system instructions or path to a text file. |
+| `--workspace` | `-w` | `ANTGRAVITY_WORKSPACE` | Restricts file tools to a specific directory (can be repeated). |
+| `--system-instruction` | `-s` | `ANTGRAVITY_SYSTEM_INSTRUCTION` | Text with custom system instructions or path to a text file. |
 | `--api-key` | | `GEMINI_API_KEY` | Passes the API key directly on the command line. |
-| `--skills-path` | `-k` | | Path to skills folders (can be repeated). If not provided and the `./skills` folder exists, it will be loaded by default. |
-| `--silent` | | | Hides internal thoughts and tool calls in the terminal. |
-| `--verbose` | `-v` | | Displays the AI's internal reasoning thoughts (Chain of Thought) in gray on the console. |
+| `--skills-path` | `-k` | `ANTGRAVITY_SKILLS_PATH` | Path to skills folders (can be repeated). If not provided and the `./skills` folder exists, it will be loaded by default. |
+| `--silent` | | `ANTGRAVITY_SILENT` | Hides internal thoughts and tool calls in the terminal. |
+| `--verbose` | `-v` | `ANTGRAVITY_VERBOSE` | Displays the AI's internal reasoning thoughts (Chain of Thought) in gray on the console. |
 | `--language` | `-l` | `ANTGRAVITY_LANG` | Specifies the output translation language (default: `en-us`, e.g. `pt-br`, `en-us`). |
+| `--env-file` | `-e` | | Path to a custom `.env` file to load configurations from (bypasses default global and local .env files). |
 
 Advanced usage example:
 ```powershell
