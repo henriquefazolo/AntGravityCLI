@@ -463,6 +463,56 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertEqual(calls[1][0][0], os.path.abspath(".env"))
         self.assertEqual(calls[1][1].get('override'), True)
 
+    @patch('main.run_cli')
+    @patch.dict(os.environ, {
+        'GEMINI_MODEL': 'gemini-custom',
+        'ANTGRAVITY_LANG': 'pt-br',
+        'ANTGRAVITY_YOLO': '1',
+        'GEMINI_API_KEY': 'envvar-api-key',
+        'ANTGRAVITY_WORKSPACE': os.path.abspath("."),
+        'ANTGRAVITY_SYSTEM_INSTRUCTION': 'custom-instruction',
+        'ANTGRAVITY_SKILLS_PATH': os.path.abspath("."),
+        'ANTGRAVITY_SILENT': '1',
+        'ANTGRAVITY_VERBOSE': '1'
+    })
+    def test_cli_environment_variables_comprehensive(self, mock_run_cli):
+        """Verify that all CLI options fall back to environment variables correctly."""
+        result = self.runner.invoke(main, [])
+        self.assertEqual(result.exit_code, 0)
+        
+        mock_run_cli.assert_called_once()
+        args, kwargs = mock_run_cli.call_args
+        # args map: prompt, model, yolo, workspace, system_instruction, api_key, skills_path
+        self.assertEqual(args[0], None)  # prompt
+        self.assertEqual(args[1], 'gemini-custom')  # model
+        self.assertEqual(args[2], True)  # yolo
+        self.assertEqual(args[3], (os.path.abspath("."),))  # workspace (as tuple)
+        self.assertEqual(args[4], 'custom-instruction')  # system_instruction
+        self.assertEqual(args[5], 'envvar-api-key')  # api_key
+        self.assertEqual(args[6], (os.path.abspath("."),))  # skills_path (as tuple)
+        self.assertEqual(kwargs.get('silent'), True)  # silent
+        self.assertEqual(kwargs.get('verbose'), True)  # verbose
+        self.assertEqual(kwargs.get('language'), 'pt-br')  # language
+
+    @patch('dotenv.load_dotenv')
+    @patch('os.path.exists')
+    @patch('sys.argv', ['main.py', '-e', 'custom_env_file.env'])
+    def test_env_loading_custom_file(self, mock_exists, mock_load_dotenv):
+        """Verify that passing -e loads only the custom env file and overrides standard envs."""
+        import importlib
+        import main as main_module
+
+        # Simulate custom file existing
+        mock_exists.side_effect = lambda path: True if path == 'custom_env_file.env' else False
+        
+        # Reload main module to trigger execution of module-level code
+        importlib.reload(main_module)
+        
+        # Assertions
+        # Should call load_dotenv once with the custom file path and override=True
+        mock_load_dotenv.assert_called_once_with('custom_env_file.env', override=True)
+
 if __name__ == '__main__':
     unittest.main()
+
 
