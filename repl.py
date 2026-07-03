@@ -7,7 +7,6 @@ import i18n
 from interfaces import OutputWriter, InputReader
 from console_io import ConsoleOutputWriter, ConsoleInputReader
 from parser import preprocess_prompt
-from list_skills import get_skills
 
 async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silent=False, verbose=False):
     """Runs the chat and streams the response (thoughts, tools, and text) in real time."""
@@ -42,7 +41,15 @@ async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silen
 def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
     """Scans registered skills folders and returns formatted skill commands and triggers."""
     suggestions = ["/exit", "/quit", "/reset"]
-    paths_to_search = skills_paths if skills_paths else ["skills", ".agents/skills"]
+    
+    # Resolve script's installation folder directory to load internal CLI skills
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    cli_skills_dir = os.path.join(base_dir, ".agents", "skills")
+    
+    paths_to_search = list(skills_paths) if skills_paths else []
+    if not paths_to_search:
+        paths_to_search = ["skills", ".agents/skills", cli_skills_dir]
+        
     for path in paths_to_search:
         if path and os.path.exists(path) and os.path.isdir(path):
             try:
@@ -71,7 +78,7 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
     click.echo(f"  {Fore.GREEN}/reset{Style.RESET_ALL}         - {i18n.t('repl', 'command_reset_desc')}")
     
     # Display active skills limited to 5 with an "and more" suffix
-    skills = get_skills()
+    skills = [s.lstrip("/") for s in suggestions if s not in ("/exit", "/quit", "/reset")]
     if skills:
         formatted_skills = [f"  {Fore.GREEN}/{s}{Style.RESET_ALL}" for s in skills]
         if len(formatted_skills) > 5:
