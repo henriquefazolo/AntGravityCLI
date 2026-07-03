@@ -52,23 +52,28 @@ class SkillDirectiveProcessor(DirectiveProcessor):
                 continue
             skills_to_inject.append(skill_name)
 
+        from list_skills import discover_skills_in_paths
+
         for skill_name in skills_to_inject:
             paths_to_search = list(skills_paths) if skills_paths else []
             if not paths_to_search:
                 base_dir = os.path.dirname(os.path.abspath(__file__))
                 cli_skills_dir = os.path.join(base_dir, ".agents", "skills")
                 paths_to_search = ["skills", ".agents/skills", cli_skills_dir]
-            for base_path in paths_to_search:
-                skill_dir = os.path.join(base_path, skill_name)
-                skill_md_path = os.path.join(skill_dir, "SKILL.md")
-                if os.path.isfile(skill_md_path):
-                    try:
-                        with open(skill_md_path, "r", encoding="utf-8") as f:
-                            content = f.read()
-                        extra_context.append(f"{i18n.t('parser', 'skill_instructions_header', skill_name=skill_name)}\n{content}\n")
-                        break
-                    except Exception as e:
-                        extra_context.append(f"{i18n.t('parser', 'error_loading_skill', skill_name=skill_name, error=str(e))}\n")
+            
+            # Unified dry discovery check
+            if skill_name in discover_skills_in_paths(paths_to_search):
+                for base_path in paths_to_search:
+                    skill_dir = os.path.join(base_path, skill_name)
+                    skill_md_path = os.path.join(skill_dir, "SKILL.md")
+                    if os.path.isfile(skill_md_path):
+                        try:
+                            with open(skill_md_path, "r", encoding="utf-8") as f:
+                                content = f.read()
+                            extra_context.append(f"{i18n.t('parser', 'skill_instructions_header', skill_name=skill_name)}\n{content}\n")
+                            break
+                        except Exception as e:
+                            extra_context.append(f"{i18n.t('parser', 'error_loading_skill', skill_name=skill_name, error=str(e))}\n")
                         
         return prompt, extra_context
 

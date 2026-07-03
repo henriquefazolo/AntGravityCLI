@@ -40,6 +40,8 @@ async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silen
 
 def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
     """Scans registered skills folders and returns formatted skill commands and triggers."""
+    from list_skills import discover_skills_in_paths
+    
     suggestions = ["/exit", "/quit", "/reset"]
     
     # Resolve script's installation folder directory to load internal CLI skills
@@ -50,17 +52,10 @@ def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
     if not paths_to_search:
         paths_to_search = ["skills", ".agents/skills", cli_skills_dir]
         
-    for path in paths_to_search:
-        if path and os.path.exists(path) and os.path.isdir(path):
-            try:
-                for entry in os.listdir(path):
-                    entry_path = os.path.join(path, entry)
-                    if os.path.isdir(entry_path):
-                        # If it contains a SKILL.md file, it is an active skill
-                        if os.path.exists(os.path.join(entry_path, "SKILL.md")):
-                            suggestions.append(f"/{entry}")
-            except Exception:
-                pass
+    discovered = discover_skills_in_paths(paths_to_search)
+    for s in discovered:
+        suggestions.append(f"/{s}")
+        
     return sorted(list(set(suggestions)))
 
 async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: OutputWriter = None, silent=False, verbose=False):
