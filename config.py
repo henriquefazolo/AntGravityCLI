@@ -41,12 +41,12 @@ def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skil
 
     # 4. Resolve Skills
     resolved_skills = list(skills_path) if skills_path else []
-    if not resolved_skills:
-        # Fallback strictly to the script's physical installation folder
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        cli_skills_dir = os.path.join(base_dir, ".agents", "skills")
-        if os.path.isdir(cli_skills_dir):
-            resolved_skills.append(cli_skills_dir)
+    
+    # Always include the script's physical installation directory's .agents/skills folder
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    cli_skills_dir = os.path.join(base_dir, ".agents", "skills")
+    if os.path.isdir(cli_skills_dir) and cli_skills_dir not in resolved_skills:
+        resolved_skills.append(cli_skills_dir)
 
     # 5. Build Agent Configuration
     return LocalAgentConfig(

@@ -35,18 +35,19 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
 
     @patch.dict(os.environ, {"GEMINI_API_KEY": "dummy_key"})
     def test_setup_agent_config_skills_fallback(self):
-        """Verify that setup_agent_config falls back to the CLI installation folder's .agents/skills if skills_path is empty."""
+        """Verify that setup_agent_config resolves both custom -k paths and the native CLI installation folder's .agents/skills."""
         config = setup_agent_config(
             model="gemini-3.5-flash",
             yolo=False,
             workspace=["."],
             system_instruction=None,
             api_key=None,
-            skills_path=[]
+            skills_path=["C:\\some\\other\\path"]
         )
         self.assertIsNotNone(config.skills_paths)
-        self.assertEqual(len(config.skills_paths), 1)
-        self.assertTrue(config.skills_paths[0].endswith(os.path.join(".agents", "skills")))
+        self.assertEqual(len(config.skills_paths), 2)
+        self.assertIn("C:\\some\\other\\path", config.skills_paths)
+        self.assertTrue(config.skills_paths[1].endswith(os.path.join(".agents", "skills")))
 
     @patch('builtins.input', return_value='y')
     def test_cli_ask_user_handler_approve(self, mock_input):
