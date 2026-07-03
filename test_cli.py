@@ -33,6 +33,21 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         result = self.runner.invoke(main, ['--api-key', '', 'Olá'])
         self.assertIn('Error: Gemini API key not found', result.output)
 
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "dummy_key"})
+    def test_setup_agent_config_skills_fallback(self):
+        """Verify that setup_agent_config falls back to the CLI installation folder's .agents/skills if skills_path is empty."""
+        config = setup_agent_config(
+            model="gemini-3.5-flash",
+            yolo=False,
+            workspace=["."],
+            system_instruction=None,
+            api_key=None,
+            skills_path=[]
+        )
+        self.assertIsNotNone(config.skills_paths)
+        self.assertEqual(len(config.skills_paths), 1)
+        self.assertTrue(config.skills_paths[0].endswith(os.path.join(".agents", "skills")))
+
     @patch('builtins.input', return_value='y')
     def test_cli_ask_user_handler_approve(self, mock_input):
         """Verify that the policy manager accepts 'y' for user confirmation."""
@@ -153,7 +168,9 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         )
         self.assertEqual(config.model, 'gemini-3.5-flash')
         self.assertEqual(config.api_key, 'fake_key')
-        self.assertFalse(config.skills_paths)
+        self.assertIsNotNone(config.skills_paths)
+        self.assertEqual(len(config.skills_paths), 1)
+        self.assertTrue(config.skills_paths[0].endswith(os.path.join(".agents", "skills")))
 
     @patch.dict(os.environ, {}, clear=True)
     def test_setup_agent_config_missing_key(self):
@@ -218,8 +235,8 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertEqual(pt_msg, "Saindo...")
 
     @patch('repl.click.echo')
-    @patch('repl.get_skills')
-    def test_run_repl_displays_skills_limit(self, mock_get_skills, mock_echo):
+    @patch('repl._get_repl_suggestions')
+    def test_run_repl_displays_skills_limit(self, mock_get_repl_suggestions, mock_echo):
         """Verify that the REPL welcome banner prints local skills, limiting to 5 with an 'and more' suffix."""
         import asyncio
         from repl import run_repl
@@ -230,7 +247,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
                 return "/quit"
                 
         # Scenario 1: More than 5 skills (should limit and append 'and more')
-        mock_get_skills.return_value = ["s1", "s2", "s3", "s4", "s5", "s6", "s7"]
+        mock_get_repl_suggestions.return_value = ["/exit", "/quit", "/reset", "/s1", "/s2", "/s3", "/s4", "/s5", "/s6", "/s7"]
         mock_agent = MagicMock()
         
         i18n.set_language("en-us")

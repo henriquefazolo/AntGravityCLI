@@ -53,9 +53,11 @@ class SkillDirectiveProcessor(DirectiveProcessor):
             skills_to_inject.append(skill_name)
 
         for skill_name in skills_to_inject:
-            paths_to_search = skills_paths or []
+            paths_to_search = list(skills_paths) if skills_paths else []
             if not paths_to_search:
-                paths_to_search = ["skills", ".agents/skills"]
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                cli_skills_dir = os.path.join(base_dir, ".agents", "skills")
+                paths_to_search = ["skills", ".agents/skills", cli_skills_dir]
             for base_path in paths_to_search:
                 skill_dir = os.path.join(base_path, skill_name)
                 skill_md_path = os.path.join(skill_dir, "SKILL.md")
