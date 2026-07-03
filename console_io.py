@@ -1,4 +1,5 @@
 import asyncio
+import re
 import colorama
 from colorama import Fore, Style
 from rich.console import Console
@@ -15,6 +16,26 @@ try:
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
 
+if HAS_PROMPT_TOOLKIT:
+    # Pattern to match slash commands as a single word in prompt-toolkit
+    _PATTERN_CMD = re.compile(r'/[a-zA-Z0-9_-]*')
+
+    class CommandCompleter(WordCompleter):
+        """Custom WordCompleter that triggers only when the word before cursor starts with a slash '/'."""
+        def get_completions(self, document, complete_event):
+            word_before_cursor = ""
+            if self.pattern:
+                matches = list(self.pattern.finditer(document.text_before_cursor))
+                if matches:
+                    match = matches[-1]
+                    if match.end() == len(document.text_before_cursor):
+                        word_before_cursor = match.group()
+            
+            if not word_before_cursor.startswith('/'):
+                return
+                
+            yield from super().get_completions(document, complete_event)
+
 # Initialize colorama for console color support (especially Windows)
 colorama.init()
 
@@ -25,7 +46,8 @@ class ConsoleOutputWriter(OutputWriter):
         self._console = Console(force_terminal=True)
         self._text_buffer = ""
         self._live = None
-        self._loading_status = None
+        self._loading_active = False
+        self._loading_task = None
 
     def _stop_live(self) -> None:
         if self._live:
@@ -66,9 +88,9 @@ class ConsoleOutputWriter(OutputWriter):
 
     def stop_loading(self) -> None:
         """Stops the visual processing indicator and clears the line."""
-        if getattr(self, '_loading_active', False):
+        if self._loading_active:
             self._loading_active = False
-            if hasattr(self, '_loading_task') and self._loading_task:
+            if self._loading_task:
                 self._loading_task.cancel()
                 self._loading_task = None
             # Clear the line by overwriting it with spaces using carriage return
@@ -129,9 +151,13 @@ class ConsoleInputReader(InputReader):
                 if self._session is None:
                     self._session = PromptSession()
                 
-                completer = WordCompleter(suggestions, ignore_case=True)
+                completer = CommandCompleter(suggestions, ignore_case=True, pattern=_PATTERN_CMD)
                 # Use prompt_toolkit's async session integrated with asyncio
-                return (await self._session.prompt_async(ANSI(prompt_with_color), completer=completer)).strip()
+                return (await self._session.prompt_async(
+                    ANSI(prompt_with_color),
+                    completer=completer,
+                    complete_while_typing=True
+                )).strip()
             except (KeyboardInterrupt, EOFError):
                 raise
             except Exception:

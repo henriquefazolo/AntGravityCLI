@@ -217,5 +217,100 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         pt_msg = i18n.t("repl", "exiting")
         self.assertEqual(pt_msg, "Saindo...")
 
+    @patch('repl.click.echo')
+    @patch('repl.get_skills')
+    def test_run_repl_displays_skills_limit(self, mock_get_skills, mock_echo):
+        """Verify that the REPL welcome banner prints local skills, limiting to 5 with an 'and more' suffix."""
+        import asyncio
+        from repl import run_repl
+        from interfaces import InputReader
+        
+        class MockInputReader(InputReader):
+            async def read_input(self, prompt_text: str, suggestions=None) -> str:
+                return "/quit"
+                
+        # Scenario 1: More than 5 skills (should limit and append 'and more')
+        mock_get_skills.return_value = ["s1", "s2", "s3", "s4", "s5", "s6", "s7"]
+        mock_agent = MagicMock()
+        
+        i18n.set_language("en-us")
+        asyncio.run(run_repl(mock_agent, [], reader=MockInputReader()))
+        
+        # Check if the individual skills and limit text are printed correctly
+        any_match_s1_en = any(f"  {Fore.GREEN}/s1{Style.RESET_ALL}" == args[0] for args, _ in mock_echo.call_args_list)
+        any_match_s5_en = any(f"  {Fore.GREEN}/s5{Style.RESET_ALL}" == args[0] for args, _ in mock_echo.call_args_list)
+        any_match_limit_en = any(f"  ... and more" == args[0] for args, _ in mock_echo.call_args_list)
+        
+        self.assertTrue(any_match_s1_en)
+        self.assertTrue(any_match_s5_en)
+        self.assertTrue(any_match_limit_en)
+
+        # Scenario 2: Portuguese switches correctly
+        mock_echo.reset_mock()
+        i18n.set_language("pt-br")
+        asyncio.run(run_repl(mock_agent, [], reader=MockInputReader()))
+        
+        any_match_s1_pt = any(f"  {Fore.GREEN}/s1{Style.RESET_ALL}" == args[0] for args, _ in mock_echo.call_args_list)
+        any_match_limit_pt = any(f"  ... e mais" == args[0] for args, _ in mock_echo.call_args_list)
+        
+        self.assertTrue(any_match_s1_pt)
+        self.assertTrue(any_match_limit_pt)
+
+    def test_get_repl_suggestions_fallback(self):
+        """Verify that _get_repl_suggestions falls back to default folders if paths are empty or None."""
+        from repl import _get_repl_suggestions
+        
+        suggestions_none = _get_repl_suggestions(None)
+        self.assertIn("/gerar_skill_template", suggestions_none)
+        self.assertIn("/gerenciar_deploy", suggestions_none)
+        self.assertIn("/exit", suggestions_none)
+        self.assertIn("/reset", suggestions_none)
+        
+        suggestions_empty = _get_repl_suggestions([])
+        self.assertIn("/gerar_skill_template", suggestions_empty)
+
+    def test_command_completer_pattern_backspace_and_filtering(self):
+        """Verify that CommandCompleter with _PATTERN_CMD handles backspaces, spaces, middle of line slash, and filters commands properly."""
+        from console_io import _PATTERN_CMD, CommandCompleter
+        from prompt_toolkit.document import Document
+        
+        completer = CommandCompleter(["/exit", "/quit", "/reset", "/gerar_skill_template", "/gerenciar_deploy"], ignore_case=True, pattern=_PATTERN_CMD)
+        
+        # Test exact match of command typed completely
+        doc1 = Document("/gerar")
+        completions1 = list(completer.get_completions(doc1, None))
+        self.assertEqual(len(completions1), 1)
+        self.assertEqual(completions1[0].text, "/gerar_skill_template")
+        
+        # Test backspaced match (fewer letters)
+        doc2 = Document("/gera")
+        completions2 = list(completer.get_completions(doc2, None))
+        self.assertEqual(len(completions2), 1)
+        self.assertEqual(completions2[0].text, "/gerar_skill_template")
+        
+        # Test short pattern matching multiple choices
+        doc3 = Document("/ger")
+        completions3 = list(completer.get_completions(doc3, None))
+        self.assertEqual(len(completions3), 2)
+        self.assertIn("/gerar_skill_template", [c.text for c in completions3])
+        self.assertIn("/gerenciar_deploy", [c.text for c in completions3])
+        
+        # Test non-slash input does not trigger suggestions
+        doc4 = Document("gerar")
+        completions4 = list(completer.get_completions(doc4, None))
+        self.assertEqual(len(completions4), 0)
+
+        # Test trailing space input does not trigger suggestions (fixes space bug)
+        doc5 = Document("Olá ")
+        completions5 = list(completer.get_completions(doc5, None))
+        self.assertEqual(len(completions5), 0)
+
+        # Test middle of the line slash command suggestion (middle matching)
+        doc6 = Document("Olá /ger")
+        completions6 = list(completer.get_completions(doc6, None))
+        self.assertEqual(len(completions6), 2)
+        self.assertIn("/gerar_skill_template", [c.text for c in completions6])
+        self.assertIn("/gerenciar_deploy", [c.text for c in completions6])
+
 if __name__ == '__main__':
     unittest.main()
