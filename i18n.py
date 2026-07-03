@@ -60,7 +60,13 @@ def t(module: str, key: str, **kwargs: Any) -> str:
     if kwargs:
         try:
             return message.format(**kwargs)
-        except (KeyError, ValueError, IndexError):
-            pass
+        except (KeyError, ValueError, IndexError) as e:
+            import warnings
+            warnings.warn(
+                f"Translation formatting failed for key '{module}.{key}' (lang: '{_current_language}'). "
+                f"Format arguments mismatch. Error: {e}",
+                UserWarning,
+                stacklevel=2
+            )
 
     return message

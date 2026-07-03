@@ -75,6 +75,21 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertEqual(config.skills_paths[0], os.path.abspath("."))
         self.assertEqual(config.skills_paths[1], cli_skills_dir)
 
+    def test_i18n_formatting_warning(self):
+        """Verify that i18n.t raises a UserWarning when format arguments are mismatched."""
+        import i18n
+        
+        # We call translation with mismatched kwargs to force KeyError
+        with patch('i18n._load_translations') as mock_load:
+            mock_load.return_value = {"test_key": "Hello {name}"}
+            
+            # Missing format arguments (should raise warning)
+            with self.assertWarns(UserWarning) as w:
+                res = i18n.t("test_module", "test_key", wrong_arg="test")
+            
+            self.assertEqual(res, "Hello {name}") # Returns raw message
+            self.assertIn("Format arguments mismatch", str(w.warning))
+
     @patch('builtins.input', return_value='y')
     def test_cli_ask_user_handler_approve(self, mock_input):
         """Verify that the policy manager accepts 'y' for user confirmation."""
