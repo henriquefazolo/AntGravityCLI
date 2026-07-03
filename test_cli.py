@@ -413,5 +413,56 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertIn("/gerar_skill_template", [c.text for c in completions6])
         self.assertIn("/gerenciar_deploy", [c.text for c in completions6])
 
+    @patch('main.run_cli')
+    @patch.dict(os.environ, {
+        'GEMINI_MODEL': 'gemini-custom',
+        'ANTGRAVITY_LANG': 'pt-br',
+        'ANTGRAVITY_YOLO': '1',
+        'GEMINI_API_KEY': 'envvar-api-key'
+    })
+    def test_cli_environment_variables(self, mock_run_cli):
+        """Verify that CLI options fall back to environment variables correctly."""
+        result = self.runner.invoke(main, [])
+        self.assertEqual(result.exit_code, 0)
+        
+        # We check the arguments passed to run_cli
+        mock_run_cli.assert_called_once()
+        args, kwargs = mock_run_cli.call_args
+        # args map: prompt, model, yolo, workspace, system_instruction, api_key, skills_path
+        self.assertEqual(args[0], None)  # prompt
+        self.assertEqual(args[1], 'gemini-custom')  # model
+        self.assertEqual(args[2], True)  # yolo
+        self.assertEqual(args[5], 'envvar-api-key')  # api_key
+        self.assertEqual(kwargs.get('language'), 'pt-br')  # language
+
+    @patch('dotenv.load_dotenv')
+    @patch('os.path.exists')
+    @patch('utils.get_base_path')
+    def test_env_loading_precedence(self, mock_get_base_path, mock_exists, mock_load_dotenv):
+        """Verify that .env files are loaded from the base installation and CWD with correct overrides."""
+        import importlib
+        import main as main_module
+
+        mock_get_base_path.return_value = "C:\\base_dir"
+        
+        # Simulate both .env files existing, but restrict to .env files to avoid side effects on reload
+        mock_exists.side_effect = lambda path: path.endswith('.env')
+        
+        # Reload main module to trigger execution of module-level code
+        importlib.reload(main_module)
+        
+        # Assertions
+        # Should call load_dotenv twice: first for base, then for CWD (with override=True)
+        self.assertEqual(mock_load_dotenv.call_count, 2)
+        
+        calls = mock_load_dotenv.call_args_list
+        # First call: base_env path
+        self.assertEqual(calls[0][0][0], os.path.join("C:\\base_dir", ".env"))
+        
+        # Second call: CWD env path, with override=True
+        self.assertEqual(calls[1][0][0], os.path.abspath(".env"))
+        self.assertEqual(calls[1][1].get('override'), True)
+
 if __name__ == '__main__':
     unittest.main()
+
