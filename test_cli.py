@@ -331,6 +331,32 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertTrue(any_match_s1_pt)
         self.assertTrue(any_match_limit_pt)
 
+    @patch('repl.click.echo')
+    @patch('repl._get_repl_suggestions')
+    def test_run_repl_displays_ant_art_logo(self, mock_get_repl_suggestions, mock_echo):
+        """Verify that the welcome banner prints the Option 1 ant logo correctly."""
+        import asyncio
+        from repl import run_repl
+        from interfaces import InputReader
+        
+        class MockInputReader(InputReader):
+            async def read_input(self, prompt_text: str, suggestions=None) -> str:
+                return "/quit"
+                
+        mock_get_repl_suggestions.return_value = ["/exit", "/quit", "/reset"]
+        mock_agent = MagicMock()
+        
+        asyncio.run(run_repl(mock_agent, [], reader=MockInputReader()))
+        
+        # Verify the logo lines are in the printed output
+        logo_line_1 = f"  {Fore.CYAN}▄▀▀▄       ▄▀▀▄{Style.RESET_ALL}"
+        logo_line_2 = f"   {Fore.CYAN}▀▄ ▀▄   ▄▀ ▄▀{Style.RESET_ALL}"
+        logo_line_3 = f"    {Fore.BLUE}▄█████████▄{Style.RESET_ALL}"
+        
+        self.assertTrue(any(logo_line_1 == args[0] for args, _ in mock_echo.call_args_list))
+        self.assertTrue(any(logo_line_2 == args[0] for args, _ in mock_echo.call_args_list))
+        self.assertTrue(any(logo_line_3 == args[0] for args, _ in mock_echo.call_args_list))
+
     def test_get_repl_suggestions_fallback(self):
         """Verify that _get_repl_suggestions falls back to default folders if paths are empty or None."""
         from repl import _get_repl_suggestions

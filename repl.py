@@ -1,3 +1,9 @@
+import sys
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
 import asyncio
 import os
 import click
@@ -67,6 +73,15 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
         writer = ConsoleOutputWriter()
         
     suggestions = _get_repl_suggestions(resolved_skills)
+    
+    # Render Option 1 colorized solid block ant art logo
+    click.echo(f"  {Fore.CYAN}▄▀▀▄       ▄▀▀▄{Style.RESET_ALL}")
+    click.echo(f"   {Fore.CYAN}▀▄ ▀▄   ▄▀ ▄▀{Style.RESET_ALL}")
+    click.echo(f"    {Fore.BLUE}▄█████████▄{Style.RESET_ALL}")
+    click.echo(f"   {Fore.BLUE}██{Fore.GREEN}███{Fore.BLUE}███{Fore.GREEN}███{Fore.BLUE}██{Style.RESET_ALL}")
+    click.echo(f"   {Fore.BLUE}█████████████{Style.RESET_ALL}")
+    click.echo(f"    {Fore.BLUE}▀█████████▀{Style.RESET_ALL}")
+    click.echo(f"      {Fore.CYAN}▄█▀ ▀█▄{Style.RESET_ALL}")
         
     click.echo(f"\n{Fore.MAGENTA}{Style.BRIGHT}{i18n.t('repl', 'repl_title')}{Style.RESET_ALL}")
     click.echo(f"{Fore.CYAN}{i18n.t('repl', 'special_commands_label')}{Style.RESET_ALL}")
