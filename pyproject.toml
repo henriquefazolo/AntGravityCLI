@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "antgravity-cli"
+version = "0.2.0"
+authors = [
+    { name = "Henrique Fazolo", email = "henriquefazolo@gmail.com" }
+]
+description = "A portable and interactive command-line interface (CLI) for the Google Antigravity ecosystem."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "click>=8.4.2",
+    "colorama>=0.4.6",
+    "python-dotenv>=1.2.2",
+    "google-antigravity>=0.1.5",
+    "rich>=13.7.1",
+    "prompt-toolkit>=3.0.43"
+]
+
+[project.urls]
+Homepage = "https://github.com/henriquefazolo/AntGravityCLI"
+
+[project.scripts]
+antgravity = "antgravity_cli.main:main"
+
+[tool.setuptools]
+packages = ["antgravity_cli"]
+
+[tool.setuptools.package-data]
+"antgravity_cli" = [
+    "translate/*/*.json",
+    ".agents/skills/*/*.md",
+    ".agents/skills/*/scripts/*",
+    ".agents/skills/*/examples/*",
+    ".agents/skills/*/references/*",
+    ".agents/AGENTS.md"
+]

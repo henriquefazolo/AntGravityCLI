@@ -5,13 +5,13 @@ import os
 from colorama import Fore, Style
 
 # Import the CLI and functions to test
-from main import main
-from runner import run_cli
-from config import setup_agent_config
-from parser import preprocess_prompt
-from handlers import cli_ask_user_handler
-from console_io import ConsoleOutputWriter
-import i18n
+from antgravity_cli.main import main
+from antgravity_cli.runner import run_cli
+from antgravity_cli.config import setup_agent_config
+from antgravity_cli.parser import preprocess_prompt
+from antgravity_cli.handlers import cli_ask_user_handler
+from antgravity_cli.console_io import ConsoleOutputWriter
+from antgravity_cli import i18n
 
 class TestAntigravityCLIFunctionality(unittest.TestCase):
     def setUp(self):
@@ -53,7 +53,8 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
     def test_setup_agent_config_skills_normalization(self):
         """Verify that setup_agent_config normalizes skills paths to absolute paths and deduplicates them."""
         # Mix of relative, absolute, and duplicate paths
-        base_dir = os.path.dirname(os.path.abspath(__file__))
+        from antgravity_cli.utils import get_base_path
+        base_dir = get_base_path()
         cli_skills_dir = os.path.join(base_dir, ".agents", "skills")
         
         config = setup_agent_config(
@@ -65,22 +66,22 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
             skills_path=[
                 ".",
                 os.path.abspath("."),
-                "./.agents/skills",
+                cli_skills_dir,
                 cli_skills_dir
             ]
         )
         self.assertIsNotNone(config.skills_paths)
-        # Deduplicated output length should be 2: absolute path of '.' and absolute path of '.agents/skills'
+        # Deduplicated output length should be 2: absolute path of '.' and absolute path of physical package skills dir
         self.assertEqual(len(config.skills_paths), 2)
         self.assertEqual(config.skills_paths[0], os.path.abspath("."))
         self.assertEqual(config.skills_paths[1], cli_skills_dir)
 
     def test_i18n_formatting_warning(self):
         """Verify that i18n.t raises a UserWarning when format arguments are mismatched."""
-        import i18n
+        from antgravity_cli import i18n
         
         # We call translation with mismatched kwargs to force KeyError
-        with patch('i18n._load_translations') as mock_load:
+        with patch('antgravity_cli.i18n._load_translations') as mock_load:
             mock_load.return_value = {"test_key": "Hello {name}"}
             
             # Missing format arguments (should raise warning)
@@ -93,7 +94,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
     def test_utils_get_base_path_frozen(self):
         """Verify that get_base_path returns sys._MEIPASS when running as frozen executable."""
         import sys
-        import utils
+        from antgravity_cli import utils
         
         # 1. Normal execution (unfrozen)
         with patch.object(sys, 'frozen', False, create=True):
@@ -126,9 +127,9 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         approved = cli_ask_user_handler(mock_tool_call)
         self.assertFalse(approved)
 
-    @patch('runner.Agent')
-    @patch('config.LocalAgentConfig')
-    @patch('runner.stream_chat_response')
+    @patch('antgravity_cli.runner.Agent')
+    @patch('antgravity_cli.config.LocalAgentConfig')
+    @patch('antgravity_cli.runner.stream_chat_response')
     @patch.dict(os.environ, {'GEMINI_API_KEY': 'fake_test_key'})
     def test_cli_runs_with_prompt(self, mock_stream, mock_config, mock_agent):
         """Verify that the basic prompt execution flow works and invokes the correct agents."""
@@ -150,9 +151,9 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertIsInstance(args[2], ConsoleOutputWriter)
         self.assertEqual(kwargs.get('silent'), False)
 
-    @patch('runner.Agent')
-    @patch('config.LocalAgentConfig')
-    @patch('runner.stream_chat_response')
+    @patch('antgravity_cli.runner.Agent')
+    @patch('antgravity_cli.config.LocalAgentConfig')
+    @patch('antgravity_cli.runner.stream_chat_response')
     @patch.dict(os.environ, {'GEMINI_API_KEY': 'fake_test_key'})
     def test_cli_runs_with_silent_flag(self, mock_stream, mock_config, mock_agent):
         """Verify that the --silent flag is correctly propagated to the stream."""
@@ -246,8 +247,8 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
     def test_prompt_preprocessor_ocp_extensibility(self):
         """Verify that new directive processors can be added without modifying existing code (OCP)."""
         import re
-        from interfaces import DirectiveProcessor
-        from parser import PromptPreprocessor
+        from antgravity_cli.interfaces import DirectiveProcessor
+        from antgravity_cli.parser import PromptPreprocessor
         
         class MockIssueDirectiveProcessor(DirectiveProcessor):
             def process(self, prompt: str, skills_paths=None):
@@ -266,12 +267,12 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertIn("=== ISSUE #999 DETAILS ===", processed)
         self.assertIn("Corrigir bug de login no sistema.", processed)
 
-    @patch('repl.click.echo')
+    @patch('antgravity_cli.repl.click.echo')
     def test_run_repl_exit_command(self, mock_echo):
         """Verify that the REPL exits and prints 'Exiting...' upon receiving /quit."""
         import asyncio
-        from repl import run_repl
-        from interfaces import InputReader
+        from antgravity_cli.repl import run_repl
+        from antgravity_cli.interfaces import InputReader
         
         class MockInputReader(InputReader):
             async def read_input(self, prompt_text: str, suggestions=None) -> str:
@@ -292,13 +293,13 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         pt_msg = i18n.t("repl", "exiting")
         self.assertEqual(pt_msg, "Saindo...")
 
-    @patch('repl.click.echo')
-    @patch('repl._get_repl_suggestions')
+    @patch('antgravity_cli.repl.click.echo')
+    @patch('antgravity_cli.repl._get_repl_suggestions')
     def test_run_repl_displays_skills_limit(self, mock_get_repl_suggestions, mock_echo):
         """Verify that the REPL welcome banner prints local skills, limiting to 5 with an 'and more' suffix."""
         import asyncio
-        from repl import run_repl
-        from interfaces import InputReader
+        from antgravity_cli.repl import run_repl
+        from antgravity_cli.interfaces import InputReader
         
         class MockInputReader(InputReader):
             async def read_input(self, prompt_text: str, suggestions=None) -> str:
@@ -331,13 +332,13 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertTrue(any_match_s1_pt)
         self.assertTrue(any_match_limit_pt)
 
-    @patch('repl.click.echo')
-    @patch('repl._get_repl_suggestions')
+    @patch('antgravity_cli.repl.click.echo')
+    @patch('antgravity_cli.repl._get_repl_suggestions')
     def test_run_repl_displays_ant_art_logo(self, mock_get_repl_suggestions, mock_echo):
         """Verify that the welcome banner prints the Option 1 ant logo correctly."""
         import asyncio
-        from repl import run_repl
-        from interfaces import InputReader
+        from antgravity_cli.repl import run_repl
+        from antgravity_cli.interfaces import InputReader
         
         class MockInputReader(InputReader):
             async def read_input(self, prompt_text: str, suggestions=None) -> str:
@@ -359,7 +360,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
 
     def test_get_repl_suggestions_fallback(self):
         """Verify that _get_repl_suggestions falls back to default folders if paths are empty or None."""
-        from repl import _get_repl_suggestions
+        from antgravity_cli.repl import _get_repl_suggestions
         
         suggestions_none = _get_repl_suggestions(None)
         self.assertIn("/gerar_skill_template", suggestions_none)
@@ -372,7 +373,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
 
     def test_command_completer_pattern_backspace_and_filtering(self):
         """Verify that CommandCompleter with _PATTERN_CMD handles backspaces, spaces, middle of line slash, and filters commands properly."""
-        from console_io import _PATTERN_CMD, CommandCompleter
+        from antgravity_cli.console_io import _PATTERN_CMD, CommandCompleter
         from prompt_toolkit.document import Document
         
         completer = CommandCompleter(["/exit", "/quit", "/reset", "/gerar_skill_template", "/gerenciar_deploy"], ignore_case=True, pattern=_PATTERN_CMD)
@@ -413,7 +414,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertIn("/gerar_skill_template", [c.text for c in completions6])
         self.assertIn("/gerenciar_deploy", [c.text for c in completions6])
 
-    @patch('main.run_cli')
+    @patch('antgravity_cli.main.run_cli')
     @patch.dict(os.environ, {
         'GEMINI_MODEL': 'gemini-custom',
         'ANTGRAVITY_LANG': 'pt-br',
@@ -437,11 +438,11 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
 
     @patch('dotenv.load_dotenv')
     @patch('os.path.exists')
-    @patch('utils.get_base_path')
+    @patch('antgravity_cli.utils.get_base_path')
     def test_env_loading_precedence(self, mock_get_base_path, mock_exists, mock_load_dotenv):
         """Verify that .env files are loaded from the base installation and CWD with correct overrides."""
         import importlib
-        import main as main_module
+        import antgravity_cli.main as main_module
 
         mock_get_base_path.return_value = "C:\\base_dir"
         
@@ -463,7 +464,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertEqual(calls[1][0][0], os.path.abspath(".env"))
         self.assertEqual(calls[1][1].get('override'), True)
 
-    @patch('main.run_cli')
+    @patch('antgravity_cli.main.run_cli')
     @patch.dict(os.environ, {
         'GEMINI_MODEL': 'gemini-custom',
         'ANTGRAVITY_LANG': 'pt-br',
@@ -496,11 +497,11 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
 
     @patch('dotenv.load_dotenv')
     @patch('os.path.exists')
-    @patch('sys.argv', ['main.py', '-e', 'custom_env_file.env'])
+    @patch('sys.argv', ['antgravity_cli/main.py', '-e', 'custom_env_file.env'])
     def test_env_loading_custom_file(self, mock_exists, mock_load_dotenv):
         """Verify that passing -e loads only the custom env file and overrides standard envs."""
         import importlib
-        import main as main_module
+        import antgravity_cli.main as main_module
 
         # Simulate custom file existing
         mock_exists.side_effect = lambda path: True if path == 'custom_env_file.env' else False

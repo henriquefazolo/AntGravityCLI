@@ -5,8 +5,8 @@ from colorama import Fore, Style
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.live import Live
-import i18n
-from interfaces import OutputWriter, InputReader
+from . import i18n
+from .interfaces import OutputWriter, InputReader
 
 try:
     from prompt_toolkit import PromptSession

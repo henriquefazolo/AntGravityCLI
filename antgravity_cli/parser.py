@@ -1,8 +1,8 @@
 import os
 import re
 from typing import Tuple, List
-import i18n
-from interfaces import DirectiveProcessor
+from . import i18n
+from .interfaces import DirectiveProcessor
 
 class FileDirectiveProcessor(DirectiveProcessor):
     """File and folder directive processor with the '@' prefix (SRP/OCP/LSP)."""
@@ -52,12 +52,12 @@ class SkillDirectiveProcessor(DirectiveProcessor):
                 continue
             skills_to_inject.append(skill_name)
 
-        from list_skills import discover_skills_in_paths
+        from .list_skills import discover_skills_in_paths
 
         for skill_name in skills_to_inject:
             paths_to_search = list(skills_paths) if skills_paths else []
             if not paths_to_search:
-                from utils import get_base_path
+                from .utils import get_base_path
                 base_dir = get_base_path()
                 cli_skills_dir = os.path.join(base_dir, ".agents", "skills")
                 paths_to_search = ["skills", ".agents/skills", cli_skills_dir]

@@ -1,5 +1,5 @@
 import os
-import i18n
+from . import i18n
 
 def discover_skills_in_paths(paths: list[str]) -> list[str]:
     """Scans the provided directories for subfolders containing a SKILL.md file and returns sorted skill names."""
@@ -20,7 +20,7 @@ def discover_skills_in_paths(paths: list[str]) -> list[str]:
 
 def get_skills() -> list[str]:
     """Returns a sorted list of directory names inside .agents/skills."""
-    from utils import get_base_path
+    from .utils import get_base_path
     base_dir = get_base_path()
     skills_dir = os.path.join(base_dir, ".agents", "skills")
     return discover_skills_in_paths([skills_dir])
@@ -32,7 +32,7 @@ def main() -> None:
     i18n.set_language(lang)
 
     # Path to the local agent skills directory
-    from utils import get_base_path
+    from .utils import get_base_path
     base_dir = get_base_path()
     skills_dir = os.path.join(base_dir, ".agents", "skills")
 

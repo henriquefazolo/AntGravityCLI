@@ -2,11 +2,11 @@ import click
 from colorama import Fore, Style
 from google.antigravity import Agent
 
-import i18n
-from config import setup_agent_config
-from repl import run_repl, stream_chat_response
-from parser import preprocess_prompt
-from console_io import ConsoleOutputWriter, ConsoleInputReader
+from . import i18n
+from .config import setup_agent_config
+from .repl import run_repl, stream_chat_response
+from .parser import preprocess_prompt
+from .console_io import ConsoleOutputWriter, ConsoleInputReader
 
 async def run_cli(prompt, model, yolo, workspace, system_instruction, api_key, skills_path, silent=False, verbose=False, language="en-us"):
     """Initializes the agent configurations and starts either a single execution or the REPL."""
