@@ -1,7 +1,7 @@
 import colorama
 from colorama import Fore, Style
 
-import i18n
+from . import i18n
 
 # Initialize colorama for console color support (especially Windows)
 colorama.init()

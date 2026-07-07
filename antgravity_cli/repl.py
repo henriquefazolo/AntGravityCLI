@@ -9,10 +9,10 @@ import os
 import click
 from colorama import Fore, Style
 from google.antigravity.types import Thought, Text, ToolCall, ToolResult
-import i18n
-from interfaces import OutputWriter, InputReader
-from console_io import ConsoleOutputWriter, ConsoleInputReader
-from parser import preprocess_prompt
+from . import i18n
+from .interfaces import OutputWriter, InputReader
+from .console_io import ConsoleOutputWriter, ConsoleInputReader
+from .parser import preprocess_prompt
 
 async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silent=False, verbose=False):
     """Runs the chat and streams the response (thoughts, tools, and text) in real time."""
@@ -46,12 +46,12 @@ async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silen
 
 def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
     """Scans registered skills folders and returns formatted skill commands and triggers."""
-    from list_skills import discover_skills_in_paths
+    from .list_skills import discover_skills_in_paths
     
     suggestions = ["/exit", "/quit", "/reset"]
     
     # Resolve script's installation folder directory to load internal CLI skills
-    from utils import get_base_path
+    from .utils import get_base_path
     base_dir = get_base_path()
     cli_skills_dir = os.path.join(base_dir, ".agents", "skills")
     

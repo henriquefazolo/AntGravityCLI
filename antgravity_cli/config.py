@@ -4,8 +4,8 @@ from colorama import Fore, Style
 from google.antigravity import LocalAgentConfig
 from google.antigravity.hooks import policy
 
-import i18n
-from handlers import cli_ask_user_handler
+from . import i18n
+from .handlers import cli_ask_user_handler
 
 def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skills_path) -> LocalAgentConfig:
     """Configures and returns the agent's LocalAgentConfig, resolving keys, paths, and policies."""
@@ -43,7 +43,7 @@ def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skil
     raw_skills = list(skills_path) if skills_path else []
     
     # Always include the script's physical installation directory's .agents/skills folder
-    from utils import get_base_path
+    from .utils import get_base_path
     base_dir = get_base_path()
     cli_skills_dir = os.path.join(base_dir, ".agents", "skills")
     if os.path.isdir(cli_skills_dir) and cli_skills_dir not in raw_skills:

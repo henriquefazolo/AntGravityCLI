@@ -22,7 +22,7 @@ def _load_translations(lang: str, module: str) -> Dict[str, str]:
         return _translation_cache[cache_key]
 
     # Resolve translations directory relative to this file, compatible with PyInstaller
-    from utils import get_base_path
+    from .utils import get_base_path
     base_dir = get_base_path()
     json_path = os.path.join(base_dir, "translate", lang, f"{module}.json")
 
