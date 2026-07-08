@@ -215,8 +215,12 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
                 os.rmdir(temp_skills_dir)
 
     @patch.dict(os.environ, {'GEMINI_API_KEY': 'fake_key'})
-    def test_setup_agent_config_success(self):
+    @patch('os.path.isdir')
+    def test_setup_agent_config_success(self, mock_isdir):
         """Verify that the agent configuration is successfully generated."""
+        # Force workspace check to find no directories, only package path exists
+        mock_isdir.side_effect = lambda path: True if "builtin_agents" in path else False
+
         config = setup_agent_config(
             model='gemini-3.5-flash',
             yolo=False,

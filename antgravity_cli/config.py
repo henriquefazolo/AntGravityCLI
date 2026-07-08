@@ -42,6 +42,16 @@ def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skil
     # 4. Resolve Skills
     raw_skills = list(skills_path) if skills_path else []
     
+    # If no custom skills paths were explicitly provided, dynamically search the active workspaces
+    if not skills_path:
+        for ws in resolved_workspace:
+            workspace_skills = os.path.join(ws, "skills")
+            workspace_agents_skills = os.path.join(ws, ".agents", "skills")
+            if os.path.isdir(workspace_skills) and workspace_skills not in raw_skills:
+                raw_skills.append(workspace_skills)
+            if os.path.isdir(workspace_agents_skills) and workspace_agents_skills not in raw_skills:
+                raw_skills.append(workspace_agents_skills)
+
     # Always include the script's physical installation directory's builtin_agents/skills folder
     from .utils import get_base_path
     base_dir = get_base_path()
