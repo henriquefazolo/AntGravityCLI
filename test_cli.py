@@ -587,6 +587,24 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertEqual(len(completions4), 1)
         self.assertEqual(completions4[0].text, "@antgravity_cli/main.py")
 
+        # Test middle-of-path file completions (substring match)
+        doc5 = Document("@cli")
+        completions5 = list(completer.get_completions(doc5, None))
+        self.assertEqual(len(completions5), 1)
+        self.assertEqual(completions5[0].text, "@antgravity_cli/main.py")
+
+        # Test prioritization of prefix match over middle/substring match
+        completer_prio = AntCompleter(
+            command_suggestions=[],
+            file_suggestions=["antgravity_cli/main.py", "cli_test.py"]
+        )
+        doc6 = Document("@cli")
+        completions6 = list(completer_prio.get_completions(doc6, None))
+        self.assertEqual(len(completions6), 2)
+        # prefix match 'cli_test.py' must come first
+        self.assertEqual(completions6[0].text, "@cli_test.py")
+        self.assertEqual(completions6[1].text, "@antgravity_cli/main.py")
+
 if __name__ == '__main__':
     unittest.main()
 

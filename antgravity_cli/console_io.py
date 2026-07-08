@@ -63,8 +63,14 @@ if HAS_PROMPT_TOOLKIT:
                 match = file_matches[-1]
                 word = match.group()
                 prefix = word[1:] # strip the '@'
+                prefix_lower = prefix.lower()
+                # Yield prefix matches first
                 for suggestion in self.file_suggestions:
-                    if suggestion.lower().startswith(prefix.lower()):
+                    if suggestion.lower().startswith(prefix_lower):
+                        yield Completion(f"@{suggestion}", start_position=-len(word))
+                # Yield substring/middle matches next
+                for suggestion in self.file_suggestions:
+                    if prefix_lower in suggestion.lower() and not suggestion.lower().startswith(prefix_lower):
                         yield Completion(f"@{suggestion}", start_position=-len(word))
 
 # Initialize colorama for console color support (especially Windows)
