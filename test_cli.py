@@ -363,42 +363,41 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         from antgravity_cli.repl import _get_repl_suggestions
         
         suggestions_none = _get_repl_suggestions(None)
-        self.assertIn("/gerar_skill_template", suggestions_none)
-        self.assertIn("/gerenciar_deploy", suggestions_none)
+        self.assertIn("/generate_skill_template", suggestions_none)
         self.assertIn("/exit", suggestions_none)
         self.assertIn("/reset", suggestions_none)
         
         suggestions_empty = _get_repl_suggestions([])
-        self.assertIn("/gerar_skill_template", suggestions_empty)
+        self.assertIn("/generate_skill_template", suggestions_empty)
 
     def test_command_completer_pattern_backspace_and_filtering(self):
         """Verify that CommandCompleter with _PATTERN_CMD handles backspaces, spaces, middle of line slash, and filters commands properly."""
         from antgravity_cli.console_io import _PATTERN_CMD, CommandCompleter
         from prompt_toolkit.document import Document
         
-        completer = CommandCompleter(["/exit", "/quit", "/reset", "/gerar_skill_template", "/gerenciar_deploy"], ignore_case=True, pattern=_PATTERN_CMD)
+        completer = CommandCompleter(["/exit", "/quit", "/reset", "/generate_skill_template", "/gerund"], ignore_case=True, pattern=_PATTERN_CMD)
         
         # Test exact match of command typed completely
-        doc1 = Document("/gerar")
+        doc1 = Document("/gener")
         completions1 = list(completer.get_completions(doc1, None))
         self.assertEqual(len(completions1), 1)
-        self.assertEqual(completions1[0].text, "/gerar_skill_template")
+        self.assertEqual(completions1[0].text, "/generate_skill_template")
         
         # Test backspaced match (fewer letters)
-        doc2 = Document("/gera")
+        doc2 = Document("/gene")
         completions2 = list(completer.get_completions(doc2, None))
         self.assertEqual(len(completions2), 1)
-        self.assertEqual(completions2[0].text, "/gerar_skill_template")
+        self.assertEqual(completions2[0].text, "/generate_skill_template")
         
         # Test short pattern matching multiple choices
-        doc3 = Document("/ger")
+        doc3 = Document("/ge")
         completions3 = list(completer.get_completions(doc3, None))
         self.assertEqual(len(completions3), 2)
-        self.assertIn("/gerar_skill_template", [c.text for c in completions3])
-        self.assertIn("/gerenciar_deploy", [c.text for c in completions3])
+        self.assertIn("/generate_skill_template", [c.text for c in completions3])
+        self.assertIn("/gerund", [c.text for c in completions3])
         
         # Test non-slash input does not trigger suggestions
-        doc4 = Document("gerar")
+        doc4 = Document("generate")
         completions4 = list(completer.get_completions(doc4, None))
         self.assertEqual(len(completions4), 0)
 
@@ -408,11 +407,11 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertEqual(len(completions5), 0)
 
         # Test middle of the line slash command suggestion (middle matching)
-        doc6 = Document("Olá /ger")
+        doc6 = Document("Olá /ge")
         completions6 = list(completer.get_completions(doc6, None))
         self.assertEqual(len(completions6), 2)
-        self.assertIn("/gerar_skill_template", [c.text for c in completions6])
-        self.assertIn("/gerenciar_deploy", [c.text for c in completions6])
+        self.assertIn("/generate_skill_template", [c.text for c in completions6])
+        self.assertIn("/gerund", [c.text for c in completions6])
 
     @patch('antgravity_cli.main.run_cli')
     @patch.dict(os.environ, {
