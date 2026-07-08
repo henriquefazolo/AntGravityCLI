@@ -113,6 +113,14 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
 
     while True:
         try:
+            # Recalculate suggestions dynamically on each prompt iteration so newly created files and skills are suggested immediately
+            suggestions = _get_repl_suggestions(resolved_skills)
+            
+            file_suggestions = []
+            for ws in workspaces:
+                file_suggestions.extend(get_workspace_files_and_folders(ws))
+            file_suggestions = sorted(list(set(file_suggestions)))
+
             user_input = await reader.read_input(
                 i18n.t("repl", "prompt_you"),
                 suggestions=suggestions,
