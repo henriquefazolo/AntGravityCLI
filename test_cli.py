@@ -275,7 +275,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         from antgravity_cli.interfaces import InputReader
         
         class MockInputReader(InputReader):
-            async def read_input(self, prompt_text: str, suggestions=None) -> str:
+            async def read_input(self, prompt_text: str, suggestions=None, *args, **kwargs) -> str:
                 return "/quit"
                 
         mock_agent = MagicMock()
@@ -302,7 +302,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         from antgravity_cli.interfaces import InputReader
         
         class MockInputReader(InputReader):
-            async def read_input(self, prompt_text: str, suggestions=None) -> str:
+            async def read_input(self, prompt_text: str, suggestions=None, *args, **kwargs) -> str:
                 return "/quit"
                 
         # Scenario 1: More than 5 skills (should limit and append 'and more')
@@ -341,7 +341,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         from antgravity_cli.interfaces import InputReader
         
         class MockInputReader(InputReader):
-            async def read_input(self, prompt_text: str, suggestions=None) -> str:
+            async def read_input(self, prompt_text: str, suggestions=None, *args, **kwargs) -> str:
                 return "/quit"
                 
         mock_get_repl_suggestions.return_value = ["/exit", "/quit", "/reset"]
@@ -511,6 +511,81 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         # Assertions
         # Should call load_dotenv once with the custom file path and override=True
         mock_load_dotenv.assert_called_once_with('custom_env_file.env', override=True)
+
+    def test_get_workspace_files_and_folders(self):
+        """Verify that get_workspace_files_and_folders correctly finds, formats, and filters workspace files and folders."""
+        import tempfile
+        from antgravity_cli.utils import get_workspace_files_and_folders
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create files
+            os.makedirs(os.path.join(tmpdir, "folder1"))
+            os.makedirs(os.path.join(tmpdir, ".git"))
+            os.makedirs(os.path.join(tmpdir, "venv"))
+            os.makedirs(os.path.join(tmpdir, "__pycache__"))
+            
+            with open(os.path.join(tmpdir, "file1.txt"), "w") as f:
+                f.write("test")
+            with open(os.path.join(tmpdir, "folder1", "file2.txt"), "w") as f:
+                f.write("test")
+            with open(os.path.join(tmpdir, ".git", "config"), "w") as f:
+                f.write("test")
+            with open(os.path.join(tmpdir, "venv", "activate"), "w") as f:
+                f.write("test")
+            with open(os.path.join(tmpdir, "__pycache__", "test.pyc"), "w") as f:
+                f.write("test")
+                
+            res = get_workspace_files_and_folders(tmpdir)
+            
+            # Expected relative paths normalized with forward slashes, directories ending with '/'
+            # Should contain: 'file1.txt', 'folder1/', 'folder1/file2.txt'
+            # Should NOT contain: '.git/', 'venv/', '__pycache__/' or files within them
+            self.assertIn("file1.txt", res)
+            self.assertIn("folder1/", res)
+            self.assertIn("folder1/file2.txt", res)
+            
+            self.assertNotIn(".git/", res)
+            self.assertNotIn(".git/config", res)
+            self.assertNotIn("venv/", res)
+            self.assertNotIn("venv/activate", res)
+            self.assertNotIn("__pycache__/", res)
+            self.assertNotIn("__pycache__/test.pyc", res)
+
+    def test_ant_completer(self):
+        """Verify that AntCompleter handles slash commands and at-sign file completions correctly."""
+        from antgravity_cli.console_io import AntCompleter
+        from prompt_toolkit.document import Document
+        
+        completer = AntCompleter(
+            command_suggestions=["/exit", "/generate_skill_template"],
+            file_suggestions=["README.md", "antgravity_cli/main.py"]
+        )
+        
+        # Test command completions
+        doc1 = Document("/ex")
+        completions1 = list(completer.get_completions(doc1, None))
+        self.assertEqual(len(completions1), 1)
+        self.assertEqual(completions1[0].text, "/exit")
+        
+        # Test file completions matching prefix
+        doc2 = Document("@REA")
+        completions2 = list(completer.get_completions(doc2, None))
+        self.assertEqual(len(completions2), 1)
+        self.assertEqual(completions2[0].text, "@README.md")
+        
+        # Test file completions list all on typing '@' only
+        doc3 = Document("@")
+        completions3 = list(completer.get_completions(doc3, None))
+        self.assertEqual(len(completions3), 2)
+        texts = [c.text for c in completions3]
+        self.assertIn("@README.md", texts)
+        self.assertIn("@antgravity_cli/main.py", texts)
+        
+        # Test mid-line file completions
+        doc4 = Document("Check @ant")
+        completions4 = list(completer.get_completions(doc4, None))
+        self.assertEqual(len(completions4), 1)
+        self.assertEqual(completions4[0].text, "@antgravity_cli/main.py")
 
 if __name__ == '__main__':
     unittest.main()

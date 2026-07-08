@@ -10,7 +10,7 @@ from .interfaces import OutputWriter, InputReader
 
 try:
     from prompt_toolkit import PromptSession
-    from prompt_toolkit.completion import WordCompleter
+    from prompt_toolkit.completion import WordCompleter, Completer, Completion
     from prompt_toolkit.formatted_text import ANSI
     HAS_PROMPT_TOOLKIT = True
 except ImportError:
@@ -35,6 +35,37 @@ if HAS_PROMPT_TOOLKIT:
                 return
                 
             yield from super().get_completions(document, complete_event)
+
+    class AntCompleter(Completer):
+        """Unified completer for slash commands and at-sign file/folder suggestions."""
+        def __init__(self, command_suggestions: list[str], file_suggestions: list[str]):
+            self.command_suggestions = command_suggestions
+            self.file_suggestions = file_suggestions
+            self._pattern_cmd = re.compile(r'/[a-zA-Z0-9_-]*')
+            self._pattern_file = re.compile(r'@[a-zA-Z0-9_\-\./\\]*')
+
+        def get_completions(self, document, complete_event):
+            text_before = document.text_before_cursor
+
+            # 1. Command completion (starts with /)
+            cmd_matches = list(self._pattern_cmd.finditer(text_before))
+            if cmd_matches and cmd_matches[-1].end() == len(text_before):
+                match = cmd_matches[-1]
+                word = match.group()
+                for suggestion in self.command_suggestions:
+                    if suggestion.lower().startswith(word.lower()):
+                        yield Completion(suggestion, start_position=-len(word))
+                return
+
+            # 2. File and folder completion (starts with @)
+            file_matches = list(self._pattern_file.finditer(text_before))
+            if file_matches and file_matches[-1].end() == len(text_before):
+                match = file_matches[-1]
+                word = match.group()
+                prefix = word[1:] # strip the '@'
+                for suggestion in self.file_suggestions:
+                    if suggestion.lower().startswith(prefix.lower()):
+                        yield Completion(f"@{suggestion}", start_position=-len(word))
 
 # Initialize colorama for console color support (especially Windows)
 colorama.init()
@@ -142,16 +173,19 @@ class ConsoleInputReader(InputReader):
     def __init__(self):
         self._session = None
 
-    async def read_input(self, prompt_text: str, suggestions: list[str] = None) -> str:
+    async def read_input(self, prompt_text: str, suggestions: list[str] = None, file_suggestions: list[str] = None) -> str:
         prompt_with_color = f"\n{Fore.CYAN}{prompt_text}{Style.RESET_ALL}"
         
-        if HAS_PROMPT_TOOLKIT and suggestions:
+        if HAS_PROMPT_TOOLKIT and (suggestions or file_suggestions):
             try:
                 # Initialize the session on-demand to avoid failure during instantiation in tests or CI/CD
                 if self._session is None:
                     self._session = PromptSession()
                 
-                completer = CommandCompleter(suggestions, ignore_case=True, pattern=_PATTERN_CMD)
+                completer = AntCompleter(
+                    command_suggestions=suggestions or [],
+                    file_suggestions=file_suggestions or []
+                )
                 # Use prompt_toolkit's async session integrated with asyncio
                 return (await self._session.prompt_async(
                     ANSI(prompt_with_color),

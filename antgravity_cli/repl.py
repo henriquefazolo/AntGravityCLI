@@ -74,6 +74,14 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
         
     suggestions = _get_repl_suggestions(resolved_skills)
     
+    from .utils import get_workspace_files_and_folders
+    file_suggestions = []
+    config = getattr(agent, "_config", None) or getattr(agent, "config", None)
+    workspaces = getattr(config, "workspaces", None) or [os.path.abspath(".")]
+    for ws in workspaces:
+        file_suggestions.extend(get_workspace_files_and_folders(ws))
+    file_suggestions = sorted(list(set(file_suggestions)))
+    
     # Render Option 1 colorized solid block ant art logo
     click.echo("")
     click.echo(f"  {Fore.CYAN}▄▀▀▄       ▄▀▀▄{Style.RESET_ALL}")
@@ -105,7 +113,11 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
 
     while True:
         try:
-            user_input = await reader.read_input(i18n.t("repl", "prompt_you"), suggestions=suggestions)
+            user_input = await reader.read_input(
+                i18n.t("repl", "prompt_you"),
+                suggestions=suggestions,
+                file_suggestions=file_suggestions
+            )
         except (KeyboardInterrupt, EOFError):
             click.echo(f"\n{Fore.YELLOW}{i18n.t('repl', 'exiting')}{Style.RESET_ALL}")
             break
