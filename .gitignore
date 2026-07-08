@@ -25,4 +25,5 @@ build/
 *.egg-info/
 
 # Agent Data
-.agents
+/.agents
+

@@ -69,7 +69,7 @@ python main.py
 **Auto-completion and Active Skills:**
 * **Real-time Auto-completion**: As you type `/` in the prompt (either at the start or mid-sentence), a dynamic dropdown menu displaying all special commands and active skills will instantly pop up. The auto-completion is case-insensitive, stays open stably when you delete characters (Backspace), and ignores regular chat text and trailing spaces to maintain a clean console.
 * **Banner Skills Listing**: At REPL startup, a welcome banner displays all available active workspace skills one per line, limited to 5. If more than 5 exist, a localized ellipsis (`... and more` or `... e mais`) is appended.
-* **Hybrid Skills Resolution**: By default (when `--skills-path` / `-k` is not specified), the welcome banner list, autocomplete menu, and prompt parser strictly load active skills from the CLI script's physical installation directory (`.agents/skills`), even when executing the CLI from or targeting a different CWD/workspace. This ensures that internal CLI utility skills (like `/gerar_skill_template` and `/gerenciar_deploy`) are always loaded and executable. If you explicitly pass one or more custom paths via the `--skills-path` / `-k` flag, the CLI dynamically loads **both** your custom/local workspace skills and the physical Ant installation skills simultaneously, giving you access to both sets of tools in the REPL session.
+* **Hybrid Skills Resolution**: By default (when `--skills-path` / `-k` is not specified), the welcome banner list, autocomplete menu, and prompt parser strictly load active skills from the CLI script's physical installation directory (`.agents/skills`), even when executing the CLI from or targeting a different CWD/workspace. This ensures that internal CLI utility skills (like `/generate_skill_template`) are always loaded and executable. If you explicitly pass one or more custom paths via the `--skills-path` / `-k` flag, the CLI dynamically loads **both** your custom/local workspace skills and the physical Ant installation skills simultaneously, giving you access to both sets of tools in the REPL session.
 
 ### 3. Safe Mode vs YOLO Mode
 - **Safe Mode (Default)**: Whenever the agent tries to run risky terminal commands (like the `RUN_COMMAND` tool), the CLI will request your permission in the console (`[y/N]`) before proceeding.
@@ -152,7 +152,7 @@ my-project/
     ├── AGENTS.md                  # Project rules and guidelines
     ├── skills.json                # (Optional) Skills configuration and registration
     └── skills/                    # Folder containing specific skills
-        └── gerenciar_deploy/      # Example of a skill
+        └── my_custom_skill/       # Example of a skill
             ├── SKILL.md           # Skill instructions and triggers (Required)
             ├── scripts/           # Supporting scripts
             ├── examples/          # Usage/code examples
@@ -181,7 +181,7 @@ The `.agents/AGENTS.md` file defines the general rules of behavior, style, and t
     2. Explain the execution result at the end.
     ```
 *   **Scripts (`scripts/`)**:
-    Any executable script inserted in the `scripts/` folder will be automatically exposed as a tool that the agent can run (e.g., `gerenciar_deploy.script_name`).
+    Any executable script inserted in the `scripts/` folder will be automatically exposed as a tool that the agent can run (e.g., `my_custom_skill.script_name`).
 
 ### 3. Skills Registration (`skills.json`)
 The `skills.json` file at the root of the `.agents/` folder allows inheriting skills from other shared directories or disabling default skills:

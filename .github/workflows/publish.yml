@@ -36,9 +36,6 @@ jobs:
     name: Publish to PyPI
     needs: build
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/antgravity-cli
     permissions:
       id-token: write  # Mandatory for Trusted Publishers (OIDC)
       contents: read
@@ -51,3 +48,5 @@ jobs:
 
       - name: Publish package distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          attestations: false
