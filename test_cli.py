@@ -829,6 +829,49 @@ Log instructions."""
         mock_agent.conversation.history = [step1, step2]
         self.assertEqual(get_active_subagent_name(mock_agent), "TestHelper")
 
+    @patch('antgravity_cli.init_project.click.prompt')
+    @patch('antgravity_cli.init_project.click.confirm')
+    @patch('antgravity_cli.init_project.click.echo')
+    def test_init_project(self, mock_echo, mock_confirm, mock_prompt):
+        """Verify that run_init correctly sets up workspace directories and .env file."""
+        from antgravity_cli.init_project import run_init
+        import tempfile
+        import shutil
+        
+        mock_prompt.side_effect = lambda text, **kwargs: {
+            "Gemini API Key (leave empty to skip)": "test_api_key",
+            "Gemini Model": "gemini-3.1-flash-lite",
+            "Language (en-us, pt-br)": "pt-br"
+        }.get(text, "default_val")
+        mock_confirm.return_value = True
+        
+        # Run in a clean temp directory
+        tmp_dir = tempfile.mkdtemp()
+        orig_cwd = os.getcwd()
+        os.chdir(tmp_dir)
+        try:
+            run_init()
+            
+            # Check directories
+            self.assertTrue(os.path.isdir(".agents"))
+            self.assertTrue(os.path.isdir(os.path.join(".agents", "skills")))
+            self.assertTrue(os.path.isdir(os.path.join(".agents", "subagents")))
+            
+            # Check AGENTS.md
+            self.assertTrue(os.path.isfile(os.path.join(".agents", "AGENTS.md")))
+            
+            # Check .env file
+            self.assertTrue(os.path.isfile(".env"))
+            with open(".env", "r", encoding="utf-8") as f:
+                content = f.read()
+                self.assertIn("GEMINI_API_KEY=test_api_key", content)
+                self.assertIn("GEMINI_MODEL=gemini-3.1-flash-lite", content)
+                self.assertIn("ANTGRAVITY_LANG=pt-br", content)
+                self.assertIn("ANTGRAVITY_YOLO=True", content)
+        finally:
+            os.chdir(orig_cwd)
+            shutil.rmtree(tmp_dir)
+
 if __name__ == '__main__':
     unittest.main()
 

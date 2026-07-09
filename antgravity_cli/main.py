@@ -44,6 +44,11 @@ from .runner import run_cli
 @click.option('--env-file', '-e', type=click.Path(exists=True, file_okay=True, dir_okay=False), help='Path to a custom .env file to load configurations from.')
 def main(prompt, model, yolo, workspace, system_instruction, api_key, skills_path, silent, verbose, language, env_file):
     """AntGravity CLI - Terminal-based interface for Google Antigravity agents."""
+    if prompt == "init":
+        from .init_project import run_init
+        run_init()
+        return
+
     asyncio.run(run_cli(prompt, model, yolo, workspace, system_instruction, api_key, skills_path, silent=silent, verbose=verbose, language=language))
 
 if __name__ == "__main__":
