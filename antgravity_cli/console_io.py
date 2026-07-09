@@ -37,12 +37,14 @@ if HAS_PROMPT_TOOLKIT:
             yield from super().get_completions(document, complete_event)
 
     class AntCompleter(Completer):
-        """Unified completer for slash commands and at-sign file/folder suggestions."""
-        def __init__(self, command_suggestions: list[str], file_suggestions: list[str]):
+        """Unified completer for slash commands, at-sign file suggestions, and colon subagent suggestions."""
+        def __init__(self, command_suggestions: list[str], file_suggestions: list[str], subagent_suggestions: list[str] = None):
             self.command_suggestions = command_suggestions
             self.file_suggestions = file_suggestions
+            self.subagent_suggestions = subagent_suggestions or []
             self._pattern_cmd = re.compile(r'/[a-zA-Z0-9_-]*')
             self._pattern_file = re.compile(r'@[a-zA-Z0-9_\-\./\\]*')
+            self._pattern_subagent = re.compile(r':[a-zA-Z0-9_-]*')
 
         def get_completions(self, document, complete_event):
             text_before = document.text_before_cursor
@@ -72,6 +74,24 @@ if HAS_PROMPT_TOOLKIT:
                 for suggestion in self.file_suggestions:
                     if prefix_lower in suggestion.lower() and not suggestion.lower().startswith(prefix_lower):
                         yield Completion(f"@{suggestion}", start_position=-len(word))
+                return
+
+            # 3. Subagent completion (starts with :)
+            subagent_matches = list(self._pattern_subagent.finditer(text_before))
+            if subagent_matches and subagent_matches[-1].end() == len(text_before):
+                match = subagent_matches[-1]
+                word = match.group()
+                prefix = word[1:] # strip the ':'
+                prefix_lower = prefix.lower()
+                # Yield prefix matches first
+                for suggestion in self.subagent_suggestions:
+                    if suggestion.lower().startswith(prefix_lower):
+                        yield Completion(f":{suggestion}", start_position=-len(word))
+                # Yield substring/middle matches next
+                for suggestion in self.subagent_suggestions:
+                    if prefix_lower in suggestion.lower() and not suggestion.lower().startswith(prefix_lower):
+                        yield Completion(f":{suggestion}", start_position=-len(word))
+                return
 
 # Initialize colorama for console color support (especially Windows)
 colorama.init()
@@ -179,10 +199,10 @@ class ConsoleInputReader(InputReader):
     def __init__(self):
         self._session = None
 
-    async def read_input(self, prompt_text: str, suggestions: list[str] = None, file_suggestions: list[str] = None) -> str:
+    async def read_input(self, prompt_text: str, suggestions: list[str] = None, file_suggestions: list[str] = None, subagent_suggestions: list[str] = None) -> str:
         prompt_with_color = f"\n{Fore.CYAN}{prompt_text}{Style.RESET_ALL}"
         
-        if HAS_PROMPT_TOOLKIT and (suggestions or file_suggestions):
+        if HAS_PROMPT_TOOLKIT and (suggestions or file_suggestions or subagent_suggestions):
             try:
                 # Initialize the session on-demand to avoid failure during instantiation in tests or CI/CD
                 if self._session is None:
@@ -190,7 +210,8 @@ class ConsoleInputReader(InputReader):
                 
                 completer = AntCompleter(
                     command_suggestions=suggestions or [],
-                    file_suggestions=file_suggestions or []
+                    file_suggestions=file_suggestions or [],
+                    subagent_suggestions=subagent_suggestions or []
                 )
                 # Use prompt_toolkit's async session integrated with asyncio
                 return (await self._session.prompt_async(

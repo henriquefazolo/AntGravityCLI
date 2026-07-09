@@ -556,13 +556,14 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
             self.assertNotIn("__pycache__/test.pyc", res)
 
     def test_ant_completer(self):
-        """Verify that AntCompleter handles slash commands and at-sign file completions correctly."""
+        """Verify that AntCompleter handles slash commands, at-sign file completions, and colon subagent completions correctly."""
         from antgravity_cli.console_io import AntCompleter
         from prompt_toolkit.document import Document
         
         completer = AntCompleter(
             command_suggestions=["/exit", "/generate_skill_template"],
-            file_suggestions=["README.md", "antgravity_cli/main.py"]
+            file_suggestions=["README.md", "antgravity_cli/main.py"],
+            subagent_suggestions=["test_helper", "log_analyzer"]
         )
         
         # Test command completions
@@ -608,6 +609,26 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         # prefix match 'cli_test.py' must come first
         self.assertEqual(completions6[0].text, "@cli_test.py")
         self.assertEqual(completions6[1].text, "@antgravity_cli/main.py")
+
+        # Test subagent completions matching prefix
+        doc7 = Document(":log")
+        completions7 = list(completer.get_completions(doc7, None))
+        self.assertEqual(len(completions7), 1)
+        self.assertEqual(completions7[0].text, ":log_analyzer")
+
+        # Test subagent completions list all on typing ':' only
+        doc8 = Document(":")
+        completions8 = list(completer.get_completions(doc8, None))
+        self.assertEqual(len(completions8), 2)
+        sub_texts = [c.text for c in completions8]
+        self.assertIn(":test_helper", sub_texts)
+        self.assertIn(":log_analyzer", sub_texts)
+
+        # Test mid-line subagent completions
+        doc9 = Document("Please call :te")
+        completions9 = list(completer.get_completions(doc9, None))
+        self.assertEqual(len(completions9), 1)
+        self.assertEqual(completions9[0].text, ":test_helper")
 
     def test_command_handlers_registry(self):
         """Verify that commands registry correctly returns maps and triggers."""

@@ -121,10 +121,26 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
                 file_suggestions.extend(get_workspace_files_and_folders(ws))
             file_suggestions = sorted(list(set(file_suggestions)))
 
+            # Discover subagents dynamically to allow autocompleting newly added subagents
+            subagent_paths = []
+            for ws in workspaces:
+                workspace_subagents = os.path.join(ws, ".agents", "subagents")
+                if os.path.isdir(workspace_subagents):
+                    subagent_paths.append(workspace_subagents)
+            
+            from .subagents import discover_subagents_in_paths
+            discovered_subagents = discover_subagents_in_paths(subagent_paths)
+            subagent_names = [sa.name for sa in discovered_subagents]
+            
+            # Sync in-memory agent configuration subagents list
+            if config:
+                config.subagents = discovered_subagents
+
             user_input = await reader.read_input(
                 i18n.t("repl", "prompt_you"),
                 suggestions=suggestions,
-                file_suggestions=file_suggestions
+                file_suggestions=file_suggestions,
+                subagent_suggestions=subagent_names
             )
         except (KeyboardInterrupt, EOFError):
             click.echo(f"\n{Fore.YELLOW}{i18n.t('repl', 'exiting')}{Style.RESET_ALL}")
