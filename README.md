@@ -196,6 +196,32 @@ The `skills.json` file at the root of the `.agents/` folder allows inheriting sk
 }
 ```
 
+### 4. Subagents (`subagents/`)
+**Subagents** (or helper ants) are specialized secondary agents configured to execute isolated tasks under the parent agent's delegation. They are declared in a modular folder structure:
+* **Directory Structure**: `.agents/subagents/<subagent_name>/`
+* **The `AGENT.md` file (Required)**: Defines the subagent configuration using YAML frontmatter, and the body contains the system instructions for this subagent:
+  ```markdown
+  ---
+  name: "LogAnalyzer"
+  description: "Specialist in analyzing logs and reporting errors."
+  capabilities:
+    enabled_tools:
+      - VIEW_FILE
+  tools:
+    - read_log_metadata
+  ---
+
+  # Subagent Instructions
+  You are a subagent specialized in reading logs. Find errors and format them in markdown tables.
+  ```
+
+#### How Subagents are Invoked
+The parent agent automatically delegates complex tasks to registered subagents using the built-in `start_subagent` tool.
+* **Tool Call Parameters**:
+  * You will see log updates like `[Tool] Calling: start_subagent with {}` in the console.
+  * The `{}` represents the tool execution arguments. If it is empty, it means no custom prompts or parameters are passed, so the subagent runs using its default system instructions defined in `AGENT.md` (which is standard for simple task delegation).
+  * For more complex operations, the parent agent can pass parameters like `"agent_name"` or `"prompt"` inside this block.
+
 ---
 
 ## Agent Personality and Instructions
