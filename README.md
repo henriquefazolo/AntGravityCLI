@@ -199,6 +199,13 @@ The `skills.json` file at the root of the `.agents/` folder allows inheriting sk
 ### 4. Subagents (`subagents/`)
 **Subagents** (or helper ants) are specialized secondary agents configured to execute isolated tasks under the parent agent's delegation. They are declared in a modular folder structure:
 * **Directory Structure**: `.agents/subagents/<subagent_name>/`
+  ```text
+  .agents/subagents/log_analyzer/
+  ├── AGENT.md            # Subagent config (YAML) and system instructions (Required)
+  ├── scripts/            # Python/Shell scripts acting as the subagent's custom tools/skills
+  └── references/         # Supporting documentation or references for this subagent
+  ```
+
 * **The `AGENT.md` file (Required)**: Defines the subagent configuration using YAML frontmatter, and the body contains the system instructions for this subagent:
   ```markdown
   ---
@@ -214,6 +221,11 @@ The `skills.json` file at the root of the `.agents/` folder allows inheriting sk
   # Subagent Instructions
   You are a subagent specialized in reading logs. Find errors and format them in markdown tables.
   ```
+
+* **The Concept of "Subagent Skills"**:
+  Unlike the main agent, subagents do **not** require internal `skills/` directories containing `SKILL.md` files. Conceptually, a subagent itself *is* a self-contained specialist.
+  * **System Instructions (`AGENT.md`)**: The body of this file functions like the `SKILL.md` instructions, defining how the subagent should act.
+  * **Custom Tools (`scripts/`)**: Any script placed inside the subagent's `scripts/` folder automatically acts as its exclusive "skills" or custom tools (registered under `tools:` in its frontmatter). These are executed by the parent runner on the subagent's behalf.
 
 #### How Subagents are Invoked
 The parent agent automatically delegates complex tasks to registered subagents using the built-in `start_subagent` tool.
