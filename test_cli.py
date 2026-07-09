@@ -753,6 +753,40 @@ Log instructions."""
         self.assertEqual(len(config.subagents), 1)
         self.assertEqual(config.subagents[0].name, "MockSub")
 
+    def test_get_active_subagent_name(self):
+        """Verify that get_active_subagent_name extracts the subagent name from history."""
+        from antgravity_cli.repl import get_active_subagent_name
+        from google.antigravity import types
+        
+        # Scenario 1: Empty history
+        mock_agent = MagicMock()
+        mock_agent.conversation.history = []
+        self.assertIsNone(get_active_subagent_name(mock_agent))
+        
+        # Scenario 2: History with no start_subagent call
+        step1 = types.Step(
+            id="1",
+            step_index=0,
+            type=types.StepType.TOOL_CALL,
+            source=types.StepSource.MODEL,
+            target=types.StepTarget.USER
+        )
+        mock_agent.conversation.history = [step1]
+        self.assertIsNone(get_active_subagent_name(mock_agent))
+        
+        # Scenario 3: History with start_subagent call
+        call = types.ToolCall(id="tc1", name="start_subagent", args={"agent_name": "TestHelper"})
+        step2 = types.Step(
+            id="2",
+            step_index=1,
+            type=types.StepType.TOOL_CALL,
+            source=types.StepSource.MODEL,
+            target=types.StepTarget.USER,
+            tool_calls=[call]
+        )
+        mock_agent.conversation.history = [step1, step2]
+        self.assertEqual(get_active_subagent_name(mock_agent), "TestHelper")
+
 if __name__ == '__main__':
     unittest.main()
 

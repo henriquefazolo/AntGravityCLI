@@ -65,6 +65,33 @@ def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
         
     return sorted(list(set(suggestions)))
 
+def get_active_subagent_name(agent) -> str | None:
+    """Helper to extract the last active subagent name from conversation history."""
+    try:
+        history = agent.conversation.history
+        for step in reversed(history):
+            if step.tool_calls:
+                for call in step.tool_calls:
+                    if call.name == "start_subagent":
+                        args = call.args
+                        if isinstance(args, dict):
+                            for key in ("agent_name", "name", "subagent_name"):
+                                if key in args and args[key]:
+                                    return str(args[key])
+                        elif isinstance(args, str):
+                            import json
+                            try:
+                                parsed = json.loads(args)
+                                if isinstance(parsed, dict):
+                                    for key in ("agent_name", "name", "subagent_name"):
+                                        if key in parsed and parsed[key]:
+                                            return str(parsed[key])
+                            except Exception:
+                                return args.strip()
+    except Exception:
+        pass
+    return None
+
 async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: OutputWriter = None, silent=False, verbose=False):
     """Runs the interactive terminal (REPL) conversing with the agent."""
     if reader is None:
@@ -136,8 +163,18 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
             if config:
                 config.subagents = discovered_subagents
 
+            base_prompt = i18n.t("repl", "prompt_you")
+            active_subagent = get_active_subagent_name(agent)
+            if active_subagent:
+                if " >" in base_prompt:
+                    prompt_text = base_prompt.replace(" >", f" (-> {active_subagent}) >")
+                else:
+                    prompt_text = f"{base_prompt.strip()} (-> {active_subagent}) > "
+            else:
+                prompt_text = base_prompt
+
             user_input = await reader.read_input(
-                i18n.t("repl", "prompt_you"),
+                prompt_text,
                 suggestions=suggestions,
                 file_suggestions=file_suggestions,
                 subagent_suggestions=subagent_names
