@@ -649,6 +649,89 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         mock_agent.conversation.clear_history.assert_called_once()
         mock_echo.assert_called_once()
 
+    def test_parse_agent_md_full(self):
+        """Verify that parse_agent_md correctly parses YAML frontmatter and body."""
+        from antgravity_cli.subagents import parse_agent_md
+        from google.antigravity.types import BuiltinTools
+        
+        content = """---
+name: "TestAgent"
+description: "A helper agent for testing."
+capabilities:
+  enabled_tools:
+    - VIEW_FILE
+    - EDIT_FILE
+tools:
+  - my_custom_tool
+---
+This is the system instructions body.
+Line 2 of instructions."""
+
+        config = parse_agent_md(content)
+        self.assertEqual(config["name"], "TestAgent")
+        self.assertEqual(config["description"], "A helper agent for testing.")
+        self.assertIn("This is the system instructions body.", config["system_instructions"])
+        self.assertIn("Line 2 of instructions.", config["system_instructions"])
+        self.assertEqual(config["tools"], ["my_custom_tool"])
+        self.assertIsNotNone(config["capabilities"])
+        self.assertEqual(config["capabilities"].enabled_tools, [BuiltinTools.VIEW_FILE, BuiltinTools.EDIT_FILE])
+        self.assertIsNone(config["capabilities"].disabled_tools)
+
+    def test_discover_subagents_in_paths(self):
+        """Verify that discover_subagents_in_paths scans folder and instantiates SubagentConfig."""
+        import tempfile
+        import shutil
+        from antgravity_cli.subagents import discover_subagents_in_paths
+        
+        tmp_dir = tempfile.mkdtemp()
+        subagent_dir = os.path.join(tmp_dir, "my_subagent")
+        os.makedirs(subagent_dir)
+        
+        agent_md_content = """---
+name: "LogAnalyzer"
+description: "Analyses logs."
+---
+Log instructions."""
+        
+        with open(os.path.join(subagent_dir, "AGENT.md"), "w", encoding="utf-8") as f:
+            f.write(agent_md_content)
+            
+        try:
+            subagents = discover_subagents_in_paths([tmp_dir])
+            self.assertEqual(len(subagents), 1)
+            sub = subagents[0]
+            self.assertEqual(sub.name, "LogAnalyzer")
+            self.assertEqual(sub.description, "Analyses logs.")
+            self.assertEqual(sub.system_instructions, "Log instructions.")
+            self.assertEqual(sub.tools, [])
+            self.assertIsNone(sub.capabilities)
+        finally:
+            shutil.rmtree(tmp_dir)
+
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "dummy_key"})
+    @patch('antgravity_cli.config.os.path.isdir')
+    @patch('antgravity_cli.subagents.discover_subagents_in_paths')
+    def test_setup_agent_config_subagents(self, mock_discover, mock_isdir):
+        """Verify that setup_agent_config resolves and injects discovered subagents."""
+        from antgravity_cli.config import setup_agent_config
+        from google.antigravity.types import SubagentConfig
+        
+        mock_isdir.side_effect = lambda path: True if "subagents" in path or "builtin" in path else False
+        mock_subagent = SubagentConfig(name="MockSub", description="Desc", system_instructions="Inst")
+        mock_discover.return_value = [mock_subagent]
+        
+        config = setup_agent_config(
+            model="gemini-3.5-flash",
+            yolo=False,
+            workspace=["."],
+            system_instruction=None,
+            api_key=None,
+            skills_path=[]
+        )
+        self.assertIsNotNone(config.subagents)
+        self.assertEqual(len(config.subagents), 1)
+        self.assertEqual(config.subagents[0].name, "MockSub")
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -67,12 +67,23 @@ def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skil
             if abs_path not in resolved_skills:
                 resolved_skills.append(abs_path)
 
-    # 5. Build Agent Configuration
+    # 5. Resolve Subagents
+    subagent_paths = []
+    for ws in resolved_workspace:
+        workspace_subagents = os.path.join(ws, ".agents", "subagents")
+        if os.path.isdir(workspace_subagents):
+            subagent_paths.append(workspace_subagents)
+            
+    from .subagents import discover_subagents_in_paths
+    resolved_subagents = discover_subagents_in_paths(subagent_paths)
+
+    # 6. Build Agent Configuration
     return LocalAgentConfig(
         model=model,
         api_key=resolved_api_key,
         policies=policies_list,
         system_instructions=sys_inst,
         workspaces=resolved_workspace,
-        skills_paths=resolved_skills if resolved_skills else None
+        skills_paths=resolved_skills if resolved_skills else None,
+        subagents=resolved_subagents
     )
