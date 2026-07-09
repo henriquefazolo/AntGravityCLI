@@ -3,6 +3,8 @@
   "special_commands_label": "Type your messages. Special commands:",
   "command_exit_desc": "Exit the CLI",
   "command_reset_desc": "Reset conversation history",
+  "command_help_desc": "Display help message with all commands, active skills, and subagents",
+  "command_ants_desc": "List registered subagents and their capabilities",
   "prompt_you": "You > ",
   "exiting": "Exiting...",
   "conversation_history_cleared": "Conversation history cleared!",

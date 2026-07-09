@@ -638,9 +638,50 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertIn("/exit", cmd_map)
         self.assertIn("/quit", cmd_map)
         self.assertIn("/reset", cmd_map)
+        self.assertIn("/help", cmd_map)
+        self.assertIn("?", cmd_map)
+        self.assertIn("/ants", cmd_map)
+        self.assertIn("/subagents", cmd_map)
         
         triggers = get_command_triggers()
-        self.assertEqual(triggers, ["/exit", "/quit", "/reset"])
+        self.assertEqual(triggers, ["/ants", "/exit", "/help", "/quit", "/reset", "/subagents", "?"])
+
+    @patch('antgravity_cli.builtin.commands.help.click.echo')
+    def test_help_command_handler(self, mock_echo):
+        """Verify that HelpCommand displays commands, skills, and subagents, and returns True."""
+        import asyncio
+        from antgravity_cli.builtin.commands.help import HelpCommand
+        from google.antigravity.types import SubagentConfig
+        
+        cmd = HelpCommand()
+        self.assertEqual(cmd.description_key, "command_help_desc")
+        
+        mock_agent = MagicMock()
+        mock_sub = SubagentConfig(name="MockSub", description="Desc")
+        mock_agent.config.subagents = [mock_sub]
+        mock_agent.config.skills_paths = []
+        
+        result = asyncio.run(cmd.execute(mock_agent))
+        self.assertTrue(result)
+        self.assertGreater(mock_echo.call_count, 3)
+
+    @patch('antgravity_cli.builtin.commands.ants.click.echo')
+    def test_ants_command_handler(self, mock_echo):
+        """Verify that AntsCommand displays subagent capabilities and returns True."""
+        import asyncio
+        from antgravity_cli.builtin.commands.ants import AntsCommand
+        from google.antigravity.types import SubagentConfig
+        
+        cmd = AntsCommand()
+        self.assertEqual(cmd.description_key, "command_ants_desc")
+        
+        mock_agent = MagicMock()
+        mock_sub = SubagentConfig(name="MockSub", description="Desc")
+        mock_agent.config.subagents = [mock_sub]
+        
+        result = asyncio.run(cmd.execute(mock_agent))
+        self.assertTrue(result)
+        self.assertGreater(mock_echo.call_count, 1)
 
     @patch('antgravity_cli.builtin.commands.exit.click.echo')
     def test_exit_command_handler(self, mock_echo):
@@ -653,6 +694,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         
         result = asyncio.run(cmd.execute(MagicMock()))
         self.assertFalse(result)
+        self.mock_echo = mock_echo # keep reference
         mock_echo.assert_called_once()
 
     @patch('antgravity_cli.builtin.commands.reset.click.echo')

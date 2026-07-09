@@ -3,6 +3,8 @@
   "special_commands_label": "Digite suas mensagens. Comandos especiais:",
   "command_exit_desc": "Sair do CLI",
   "command_reset_desc": "Reiniciar o histórico da conversa",
+  "command_help_desc": "Exibir mensagem de ajuda com todos os comandos, skills ativas e subagentes",
+  "command_ants_desc": "Listar subagentes registrados e suas capacidades",
   "prompt_you": "Você > ",
   "exiting": "Saindo...",
   "conversation_history_cleared": "Histórico da conversa limpo!",

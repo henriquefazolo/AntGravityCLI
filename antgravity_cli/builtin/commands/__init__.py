@@ -1,9 +1,13 @@
 from .exit import ExitCommand
 from .reset import ResetCommand
+from .help import HelpCommand
+from .ants import AntsCommand
 
 COMMANDS = [
     ExitCommand(),
-    ResetCommand()
+    ResetCommand(),
+    HelpCommand(),
+    AntsCommand()
 ]
 
 def get_command_map():
