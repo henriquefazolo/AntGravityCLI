@@ -609,6 +609,46 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertEqual(completions6[0].text, "@cli_test.py")
         self.assertEqual(completions6[1].text, "@antgravity_cli/main.py")
 
+    def test_command_handlers_registry(self):
+        """Verify that commands registry correctly returns maps and triggers."""
+        from antgravity_cli.builtin.commands import get_command_map, get_command_triggers
+        
+        cmd_map = get_command_map()
+        self.assertIn("/exit", cmd_map)
+        self.assertIn("/quit", cmd_map)
+        self.assertIn("/reset", cmd_map)
+        
+        triggers = get_command_triggers()
+        self.assertEqual(triggers, ["/exit", "/quit", "/reset"])
+
+    @patch('antgravity_cli.builtin.commands.exit.click.echo')
+    def test_exit_command_handler(self, mock_echo):
+        """Verify that ExitCommand displays the exit message and returns False."""
+        import asyncio
+        from antgravity_cli.builtin.commands.exit import ExitCommand
+        
+        cmd = ExitCommand()
+        self.assertEqual(cmd.description_key, "command_exit_desc")
+        
+        result = asyncio.run(cmd.execute(MagicMock()))
+        self.assertFalse(result)
+        mock_echo.assert_called_once()
+
+    @patch('antgravity_cli.builtin.commands.reset.click.echo')
+    def test_reset_command_handler(self, mock_echo):
+        """Verify that ResetCommand clears history and returns True."""
+        import asyncio
+        from antgravity_cli.builtin.commands.reset import ResetCommand
+        
+        cmd = ResetCommand()
+        self.assertEqual(cmd.description_key, "command_reset_desc")
+        
+        mock_agent = MagicMock()
+        result = asyncio.run(cmd.execute(mock_agent))
+        self.assertTrue(result)
+        mock_agent.conversation.clear_history.assert_called_once()
+        mock_echo.assert_called_once()
+
 if __name__ == '__main__':
     unittest.main()
 

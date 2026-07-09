@@ -43,12 +43,15 @@ class SkillDirectiveProcessor(DirectiveProcessor):
     
     def process(self, prompt: str, skills_paths: list[str] = None) -> Tuple[str, list[str]]:
         extra_context = []
-        # Ignores special REPL commands (/exit, /quit, /reset)
+        # Ignores special REPL commands dynamically
+        from .builtin.commands import get_command_map
+        commands_map = get_command_map()
+        
         skill_matches = re.finditer(r'(?<!\w)/([a-zA-Z0-9_-]+)', prompt)
         skills_to_inject = []
         for match in skill_matches:
             skill_name = match.group(1)
-            if skill_name in ("exit", "quit", "reset"):
+            if f"/{skill_name}" in commands_map:
                 continue
             skills_to_inject.append(skill_name)
 

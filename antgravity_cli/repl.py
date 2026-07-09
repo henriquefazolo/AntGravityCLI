@@ -47,8 +47,8 @@ async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silen
 def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
     """Scans registered skills folders and returns formatted skill commands and triggers."""
     from .list_skills import discover_skills_in_paths
-    
-    suggestions = ["/exit", "/quit", "/reset"]
+    from .builtin.commands import get_command_triggers
+    suggestions = get_command_triggers()
     
     # Resolve script's installation folder directory to load internal CLI skills
     from .utils import get_base_path
@@ -133,13 +133,12 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
         if not user_input:
             continue
 
-        if user_input in ("/exit", "/quit"):
-            click.echo(f"{Fore.YELLOW}{i18n.t('repl', 'exiting')}{Style.RESET_ALL}")
-            break
-
-        if user_input == "/reset":
-            agent.conversation.clear_history()
-            click.echo(i18n.t("repl", "conversation_history_cleared"))
+        from .builtin.commands import get_command_map
+        commands_map = get_command_map()
+        if user_input in commands_map:
+            continue_repl = await commands_map[user_input].execute(agent)
+            if not continue_repl:
+                break
             continue
 
         processed_input = preprocess_prompt(user_input, resolved_skills)
