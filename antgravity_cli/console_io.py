@@ -12,6 +12,7 @@ try:
     from prompt_toolkit import PromptSession
     from prompt_toolkit.completion import WordCompleter, Completer, Completion
     from prompt_toolkit.formatted_text import ANSI
+    from prompt_toolkit.history import FileHistory
     HAS_PROMPT_TOOLKIT = True
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
@@ -206,7 +207,9 @@ class ConsoleInputReader(InputReader):
             try:
                 # Initialize the session on-demand to avoid failure during instantiation in tests or CI/CD
                 if self._session is None:
-                    self._session = PromptSession()
+                    import os
+                    history_file = os.path.expanduser("~/.antgravity_history")
+                    self._session = PromptSession(history=FileHistory(history_file))
                 
                 completer = AntCompleter(
                     command_suggestions=suggestions or [],
