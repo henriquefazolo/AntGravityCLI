@@ -53,7 +53,7 @@ def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
     # Resolve script's installation folder directory to load internal CLI skills
     from .utils import get_base_path
     base_dir = get_base_path()
-    cli_skills_dir = os.path.join(base_dir, "builtin_agents", "skills")
+    cli_skills_dir = os.path.join(base_dir, "builtin", "skills")
     
     paths_to_search = list(skills_paths) if skills_paths else []
     if not paths_to_search:

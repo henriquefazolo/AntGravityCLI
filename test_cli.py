@@ -35,7 +35,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
 
     @patch.dict(os.environ, {"GEMINI_API_KEY": "dummy_key"})
     def test_setup_agent_config_skills_fallback(self):
-        """Verify that setup_agent_config resolves both custom -k paths and the native CLI installation folder's builtin_agents/skills."""
+        """Verify that setup_agent_config resolves both custom -k paths and the native CLI installation folder's builtin/skills."""
         config = setup_agent_config(
             model="gemini-3.5-flash",
             yolo=False,
@@ -47,7 +47,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertIsNotNone(config.skills_paths)
         self.assertEqual(len(config.skills_paths), 2)
         self.assertIn("C:\\some\\other\\path", config.skills_paths)
-        self.assertTrue(config.skills_paths[1].endswith(os.path.join("builtin_agents", "skills")))
+        self.assertTrue(config.skills_paths[1].endswith(os.path.join("builtin", "skills")))
 
     @patch.dict(os.environ, {"GEMINI_API_KEY": "dummy_key"})
     def test_setup_agent_config_skills_normalization(self):
@@ -55,7 +55,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         # Mix of relative, absolute, and duplicate paths
         from antgravity_cli.utils import get_base_path
         base_dir = get_base_path()
-        cli_skills_dir = os.path.join(base_dir, "builtin_agents", "skills")
+        cli_skills_dir = os.path.join(base_dir, "builtin", "skills")
         
         config = setup_agent_config(
             model="gemini-3.5-flash",
@@ -219,7 +219,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
     def test_setup_agent_config_success(self, mock_isdir):
         """Verify that the agent configuration is successfully generated."""
         # Force workspace check to find no directories, only package path exists
-        mock_isdir.side_effect = lambda path: True if "builtin_agents" in path else False
+        mock_isdir.side_effect = lambda path: True if "builtin" in path else False
 
         config = setup_agent_config(
             model='gemini-3.5-flash',
@@ -233,7 +233,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertEqual(config.api_key, 'fake_key')
         self.assertIsNotNone(config.skills_paths)
         self.assertEqual(len(config.skills_paths), 1)
-        self.assertTrue(config.skills_paths[0].endswith(os.path.join("builtin_agents", "skills")))
+        self.assertTrue(config.skills_paths[0].endswith(os.path.join("builtin", "skills")))
 
     @patch.dict(os.environ, {}, clear=True)
     def test_setup_agent_config_missing_key(self):

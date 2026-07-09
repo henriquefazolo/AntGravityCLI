@@ -52,10 +52,10 @@ def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skil
             if os.path.isdir(workspace_agents_skills) and workspace_agents_skills not in raw_skills:
                 raw_skills.append(workspace_agents_skills)
 
-    # Always include the script's physical installation directory's builtin_agents/skills folder
+    # Always include the script's physical installation directory's builtin/skills folder
     from .utils import get_base_path
     base_dir = get_base_path()
-    cli_skills_dir = os.path.join(base_dir, "builtin_agents", "skills")
+    cli_skills_dir = os.path.join(base_dir, "builtin", "skills")
     if os.path.isdir(cli_skills_dir) and cli_skills_dir not in raw_skills:
         raw_skills.append(cli_skills_dir)
 

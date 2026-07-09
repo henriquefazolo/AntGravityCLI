@@ -19,10 +19,10 @@ def discover_skills_in_paths(paths: list[str]) -> list[str]:
     return sorted(list(set(skills)))
 
 def get_skills() -> list[str]:
-    """Returns a sorted list of directory names inside builtin_agents/skills."""
+    """Returns a sorted list of directory names inside builtin/skills."""
     from .utils import get_base_path
     base_dir = get_base_path()
-    skills_dir = os.path.join(base_dir, "builtin_agents", "skills")
+    skills_dir = os.path.join(base_dir, "builtin", "skills")
     return discover_skills_in_paths([skills_dir])
 
 def main() -> None:
@@ -34,7 +34,7 @@ def main() -> None:
     # Path to the local agent skills directory
     from .utils import get_base_path
     base_dir = get_base_path()
-    skills_dir = os.path.join(base_dir, "builtin_agents", "skills")
+    skills_dir = os.path.join(base_dir, "builtin", "skills")
 
     if not os.path.isdir(skills_dir):
         print(i18n.t("list_skills", "directory_not_found", directory=skills_dir))

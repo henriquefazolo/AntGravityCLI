@@ -59,7 +59,7 @@ class SkillDirectiveProcessor(DirectiveProcessor):
             if not paths_to_search:
                 from .utils import get_base_path
                 base_dir = get_base_path()
-                cli_skills_dir = os.path.join(base_dir, "builtin_agents", "skills")
+                cli_skills_dir = os.path.join(base_dir, "builtin", "skills")
                 paths_to_search = ["skills", ".agents/skills", cli_skills_dir]
             
             # Unified dry discovery check

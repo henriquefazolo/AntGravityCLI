@@ -39,9 +39,9 @@ packages = ["antgravity_cli"]
 [tool.setuptools.package-data]
 "antgravity_cli" = [
     "translate/*/*.json",
-    "builtin_agents/skills/*/*.md",
-    "builtin_agents/skills/*/scripts/*",
-    "builtin_agents/skills/*/examples/*",
-    "builtin_agents/skills/*/references/*",
-    "builtin_agents/AGENTS.md"
+    "builtin/skills/*/*.md",
+    "builtin/skills/*/scripts/*",
+    "builtin/skills/*/examples/*",
+    "builtin/skills/*/references/*",
+    "builtin/AGENTS.md"
 ]

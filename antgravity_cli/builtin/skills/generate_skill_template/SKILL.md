@@ -14,7 +14,7 @@ Whenever the user requests the creation of a new skill, for example with a promp
    - If the user specified the name of the skill, normalize it to snake_case or kebab-case (e.g., `manage_deploy`).
    - If the skill name was **not** provided, ask the user for it in a text response. Do **not** call any tools or execute any commands until you have a valid skill name from the user.
 2. **Execute the Automation**:
-   - First, find the absolute path of `generate_template.py`. You can use `FIND_FILE` or `SEARCH_DIR` to search for it (it resides inside the `antgravity_cli` folder under `builtin_agents/skills/generate_skill_template/scripts/`).
+   - First, find the absolute path of `generate_template.py`. You can use `FIND_FILE` or `SEARCH_DIR` to search for it (it resides inside the `antgravity_cli` folder under `builtin/skills/generate_skill_template/scripts/`).
    - Run the script with Python using the `RUN_COMMAND` tool:
      ```powershell
      python <absolute_path_to_generate_template.py> <skill_name>
