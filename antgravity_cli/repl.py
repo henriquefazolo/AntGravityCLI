@@ -14,7 +14,43 @@ from .interfaces import OutputWriter, InputReader
 from .console_io import ConsoleOutputWriter, ConsoleInputReader
 from .parser import preprocess_prompt
 
-async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silent=False, verbose=False):
+def get_subagent_name_by_id(agent, traj_id: str) -> str:
+    """Resolves a subagent name from a trajectory ID by inspecting history."""
+    if not traj_id:
+        return "Subagent"
+    try:
+        main_id = getattr(agent.conversation.connection, "_main_trajectory_id", None)
+        if traj_id == main_id:
+            return "Parent"
+        
+        history = agent.conversation.history
+        for step in reversed(history):
+            if step.tool_calls:
+                for call in step.tool_calls:
+                    if call.name == "start_subagent":
+                        args = call.args
+                        name = None
+                        if isinstance(args, dict):
+                            for key in ("agent_name", "name", "subagent_name"):
+                                if key in args and args[key]:
+                                    name = str(args[key])
+                        elif isinstance(args, str):
+                            import json
+                            try:
+                                parsed = json.loads(args)
+                                if isinstance(parsed, dict):
+                                    for key in ("agent_name", "name", "subagent_name"):
+                                        if key in parsed and parsed[key]:
+                                            name = str(parsed[key])
+                            except Exception:
+                                name = args.strip()
+                        if name:
+                            return name
+    except Exception:
+        pass
+    return "Subagent"
+
+async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silent=False, verbose=False, verbose_subagents=False):
     """Runs the chat and streams the response (thoughts, tools, and text) in real time."""
     if writer is None:
         writer = ConsoleOutputWriter()
@@ -25,17 +61,59 @@ async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silen
         response = await agent.chat(prompt)
         
         async for chunk in response.chunks:
+            is_subagent = False
+            subagent_name = "Subagent"
+            try:
+                history = agent.conversation.history
+                
+                # Retrieve step index if it exists (Thought, Text chunks)
+                chunk_step_idx = getattr(chunk, "step_index", None)
+                chunk_name = getattr(chunk, "name", None)
+                chunk_id = getattr(chunk, "id", None)
+                
+                for s in reversed(history):
+                    matched = False
+                    if chunk_step_idx is not None and s.step_index == chunk_step_idx:
+                        matched = True
+                    elif chunk_name is not None and s.tool_calls:
+                        for tc in s.tool_calls:
+                            if tc.name == chunk_name and getattr(tc, "id", None) == chunk_id:
+                                matched = True
+                                break
+                                
+                    if matched:
+                        main_id = getattr(agent.conversation.connection, "_main_trajectory_id", None)
+                        traj_id = getattr(s, "trajectory_id", None)
+                        if main_id and traj_id and traj_id != main_id:
+                            is_subagent = True
+                            subagent_name = get_subagent_name_by_id(agent, traj_id)
+                        break
+            except Exception:
+                pass
+
             if isinstance(chunk, Thought):
-                if verbose and not silent:
-                    writer.write_thought(chunk.text)
+                if is_subagent:
+                    if verbose_subagents and not silent:
+                        writer.write_thought(f"[{subagent_name}] {chunk.text}")
+                else:
+                    if verbose and not silent:
+                        writer.write_thought(chunk.text)
             elif isinstance(chunk, Text):
                 writer.write_text(chunk.text)
             elif isinstance(chunk, ToolCall):
-                if not silent:
-                    writer.write_tool_call(chunk.name, chunk.args)
+                if is_subagent:
+                    if verbose_subagents and not silent:
+                        writer.write_tool_call(f"[{subagent_name}] {chunk.name}", chunk.args)
+                else:
+                    if not silent:
+                        writer.write_tool_call(chunk.name, chunk.args)
             elif isinstance(chunk, ToolResult):
-                if not silent:
-                    writer.write_tool_result(chunk.name, chunk.result, chunk.error)
+                if is_subagent:
+                    if verbose_subagents and not silent:
+                        writer.write_tool_result(f"[{subagent_name}] {chunk.name}", chunk.result, chunk.error)
+                else:
+                    if not silent:
+                        writer.write_tool_result(chunk.name, chunk.result, chunk.error)
         
         writer.stop_loading()
         writer.reset()
@@ -93,7 +171,7 @@ def get_active_subagent_name(agent) -> str | None:
         pass
     return None
 
-async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: OutputWriter = None, silent=False, verbose=False):
+async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: OutputWriter = None, silent=False, verbose=False, verbose_subagents=False):
     """Runs the interactive terminal (REPL) conversing with the agent."""
     if reader is None:
         reader = ConsoleInputReader()
@@ -213,4 +291,4 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
             continue
 
         processed_input = preprocess_prompt(user_input, resolved_skills, disabled_skills=disabled_skills)
-        await stream_chat_response(agent, processed_input, writer, silent=silent, verbose=verbose)
+        await stream_chat_response(agent, processed_input, writer, silent=silent, verbose=verbose, verbose_subagents=verbose_subagents)
