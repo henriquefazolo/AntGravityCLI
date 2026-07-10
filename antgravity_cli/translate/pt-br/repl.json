@@ -14,5 +14,6 @@
   "conversation_history_cleared": "Histórico da conversa limpo!",
   "error_during_conversation": "Erro durante a conversação: {error}",
   "and_more": "e mais",
-  "skills_label": "Skills"
+  "skills_label": "Skills",
+  "version_label": "Versão {version}"
 }

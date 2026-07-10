@@ -188,7 +188,14 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
         file_suggestions.extend(get_workspace_files_and_folders(ws))
     file_suggestions = sorted(list(set(file_suggestions)))
     
+    from importlib.metadata import version, PackageNotFoundError
+    try:
+        app_version = version("AntGravityCLI")
+    except PackageNotFoundError:
+        app_version = "1.2.2"
+
     # Render Option 1 colorized solid block ant art logo
+    click.echo(f"\n{i18n.t('repl', 'version_label', version=app_version)}")
     click.echo("")
     click.echo(f"  {Fore.CYAN}▄▀▀▄       ▄▀▀▄{Style.RESET_ALL}")
     click.echo(f"   {Fore.CYAN}▀▄ ▀▄   ▄▀ ▄▀{Style.RESET_ALL}")
