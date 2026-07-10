@@ -40,5 +40,5 @@ class OutputWriter(ABC):
 class InputReader(ABC):
     """Base interface for user text input (DIP/ISP)."""
     @abstractmethod
-    async def read_input(self, prompt_text: str, suggestions: list[str] = None, file_suggestions: list[str] = None) -> str:
+    async def read_input(self, prompt_text: str, suggestions: list[str] = None, file_suggestions: list[str] = None, subagent_suggestions: list[str] = None) -> str:
         pass
