@@ -87,4 +87,5 @@ else:
     class CommandCompleter:
         pass
     class AntCompleter:
-        pass
+        def __init__(self, **kwargs):
+            pass

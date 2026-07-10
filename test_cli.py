@@ -919,6 +919,16 @@ Log instructions."""
         self.assertTrue(res)
         self.assertNotIn("create_txt_file", mock_agent._disabled_skills)
 
+        # Test disabling with prefix '/'
+        res = asyncio.run(cmd_disable.execute(mock_agent, context="/create_txt_file"))
+        self.assertTrue(res)
+        self.assertIn("create_txt_file", mock_agent._disabled_skills)
+
+        # Test enabling with prefix '/'
+        res = asyncio.run(cmd_enable.execute(mock_agent, context="/create_txt_file"))
+        self.assertTrue(res)
+        self.assertNotIn("create_txt_file", mock_agent._disabled_skills)
+
     @patch('antgravity_cli.builtin.commands.disable_agent.click.echo')
     def test_disable_enable_agent_command(self, mock_echo):
         """Verify that DisableAgentCommand and EnableAgentCommand update agent._disabled_subagents."""
@@ -941,6 +951,16 @@ Log instructions."""
         cmd_enable = EnableAgentCommand()
         self.assertEqual(cmd_enable.description_key, "command_enable_agent_desc")
         res = asyncio.run(cmd_enable.execute(mock_agent, context="LogAnalyzer"))
+        self.assertTrue(res)
+        self.assertNotIn("LogAnalyzer", mock_agent._disabled_subagents)
+
+        # Test disabling with prefix ':'
+        res = asyncio.run(cmd_disable.execute(mock_agent, context=":LogAnalyzer"))
+        self.assertTrue(res)
+        self.assertIn("LogAnalyzer", mock_agent._disabled_subagents)
+
+        # Test enabling with prefix ':'
+        res = asyncio.run(cmd_enable.execute(mock_agent, context=":LogAnalyzer"))
         self.assertTrue(res)
         self.assertNotIn("LogAnalyzer", mock_agent._disabled_subagents)
 

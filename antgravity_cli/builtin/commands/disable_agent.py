@@ -20,6 +20,9 @@ class DisableAgentCommand(REPLCommand):
             return True
             
         agent_name = context.strip()
+        if agent_name.startswith(":"):
+            agent_name = agent_name[1:]
+            
         if not hasattr(agent, "_disabled_subagents"):
             agent._disabled_subagents = set()
             

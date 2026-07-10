@@ -19,6 +19,9 @@ class EnableSkillCommand(REPLCommand):
             return True
             
         skill_name = context.strip()
+        if skill_name.startswith("/"):
+            skill_name = skill_name[1:]
+            
         if hasattr(agent, "_disabled_skills") and skill_name in agent._disabled_skills:
             agent._disabled_skills.remove(skill_name)
             click.echo(f"{Fore.GREEN}Skill '{skill_name}' has been enabled for this session.{Style.RESET_ALL}")
