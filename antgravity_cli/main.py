@@ -37,7 +37,7 @@ colorama.init()
 try:
     __version__ = version("AntGravityCLI")
 except PackageNotFoundError:
-    __version__ = "1.2.3"
+    __version__ = "1.2.4"
 
 from .runner import run_cli
 
