@@ -4,7 +4,7 @@ from typing import Tuple, List
 class DirectiveProcessor(ABC):
     """Base interface for prompt directive processors (LSP/OCP)."""
     @abstractmethod
-    def process(self, prompt: str, skills_paths: list[str] = None) -> Tuple[str, list[str]]:
+    def process(self, prompt: str, skills_paths: list[str] = None, disabled_skills: set[str] = None) -> Tuple[str, list[str]]:
         """
         Processes the prompt and returns a tuple containing the updated prompt and a list
         of strings containing the extra context to be injected.

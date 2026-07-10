@@ -20,12 +20,15 @@ async def run_cli(prompt, model, yolo, workspace, system_instruction, api_key, s
     writer = ConsoleOutputWriter()
     reader = ConsoleInputReader()
 
-    if prompt:
-        # Single Prompt
-        async with Agent(config) as agent:
-            processed_prompt = preprocess_prompt(prompt, config.skills_paths)
-            await stream_chat_response(agent, processed_prompt, writer, silent=silent, verbose=verbose, verbose_subagents=verbose_subagents)
-    else:
-        # Interactive Mode (REPL)
-        async with Agent(config) as agent:
-            await run_repl(agent, config.skills_paths, reader, writer, silent=silent, verbose=verbose, verbose_subagents=verbose_subagents)
+    try:
+        if prompt:
+            # Single Prompt
+            async with Agent(config) as agent:
+                processed_prompt = preprocess_prompt(prompt, config.skills_paths)
+                await stream_chat_response(agent, processed_prompt, writer, silent=silent, verbose=verbose, verbose_subagents=verbose_subagents)
+        else:
+            # Interactive Mode (REPL)
+            async with Agent(config) as agent:
+                await run_repl(agent, config.skills_paths, reader, writer, silent=silent, verbose=verbose, verbose_subagents=verbose_subagents)
+    except Exception as e:
+        click.echo(f"{Fore.RED}{i18n.t('runner', 'failed_to_run_agent', error=str(e))}{Style.RESET_ALL}", err=True)

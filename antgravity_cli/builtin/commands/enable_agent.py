@@ -14,8 +14,9 @@ class EnableAgentCommand(REPLCommand):
         return "command_enable_agent_desc"
 
     async def execute(self, agent, context=None) -> bool:
+        from ... import i18n
         if not context or not context.strip():
-            click.echo(f"{Fore.RED}Error: Please specify the name of the subagent to enable (e.g., /enable_agent log_analyzer){Style.RESET_ALL}")
+            click.echo(f"{Fore.RED}{i18n.t('commands', 'error_specify_agent_enable')}{Style.RESET_ALL}")
             return True
             
         agent_name = context.strip()
@@ -31,7 +32,7 @@ class EnableAgentCommand(REPLCommand):
                     
         if target_name:
             agent._disabled_subagents.remove(target_name)
-            click.echo(f"{Fore.GREEN}Subagent '{target_name}' has been enabled (delegation allowed).{Style.RESET_ALL}")
+            click.echo(f"{Fore.GREEN}{i18n.t('commands', 'agent_enabled_success', target_name=target_name)}{Style.RESET_ALL}")
         else:
-            click.echo(f"{Fore.YELLOW}Subagent '{agent_name}' is not currently disabled.{Style.RESET_ALL}")
+            click.echo(f"{Fore.YELLOW}{i18n.t('commands', 'agent_not_disabled', agent_name=agent_name)}{Style.RESET_ALL}")
         return True

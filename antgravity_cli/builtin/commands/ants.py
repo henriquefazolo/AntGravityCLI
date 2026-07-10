@@ -49,7 +49,7 @@ class AntsCommand(REPLCommand):
                     if tool_names:
                         click.echo(f"    Custom tools: {', '.join(tool_names)}")
         else:
-            click.echo("  No subagents registered in this colony.")
+            click.echo(i18n.t("commands", "no_subagents_colony"))
             
         click.echo(f"\n{Fore.MAGENTA}{'-' * 40}{Style.RESET_ALL}")
         return True

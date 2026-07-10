@@ -15,8 +15,9 @@ class DisableSkillCommand(REPLCommand):
         return "command_disable_skill_desc"
 
     async def execute(self, agent, context=None) -> bool:
+        from ... import i18n
         if not context or not context.strip():
-            click.echo(f"{Fore.RED}Error: Please specify the name of the skill to disable (e.g., /disable_skill create_txt_file){Style.RESET_ALL}")
+            click.echo(f"{Fore.RED}{i18n.t('commands', 'error_specify_skill_disable')}{Style.RESET_ALL}")
             return True
             
         skill_name = context.strip()
@@ -39,8 +40,8 @@ class DisableSkillCommand(REPLCommand):
         discovered_skills = ws_context.discover_skills()
         
         if skill_name not in discovered_skills:
-            click.echo(f"{Fore.YELLOW}Warning: Skill '{skill_name}' not found among active skills.{Style.RESET_ALL}")
+            click.echo(f"{Fore.YELLOW}{i18n.t('commands', 'warning_skill_not_found', skill_name=skill_name)}{Style.RESET_ALL}")
             
         agent._disabled_skills.add(skill_name)
-        click.echo(f"{Fore.GREEN}Skill '{skill_name}' has been disabled for this session.{Style.RESET_ALL}")
+        click.echo(f"{Fore.GREEN}{i18n.t('commands', 'skill_disabled_success', skill_name=skill_name)}{Style.RESET_ALL}")
         return True

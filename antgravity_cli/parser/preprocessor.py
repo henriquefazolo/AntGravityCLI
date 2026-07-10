@@ -15,10 +15,7 @@ class PromptPreprocessor:
         aggregated_context = []
         current_prompt = prompt
         for processor in self._processors:
-            if isinstance(processor, SkillDirectiveProcessor):
-                current_prompt, extra_context = processor.process(current_prompt, skills_paths, disabled_skills=disabled_skills)
-            else:
-                current_prompt, extra_context = processor.process(current_prompt, skills_paths)
+            current_prompt, extra_context = processor.process(current_prompt, skills_paths, disabled_skills=disabled_skills)
             aggregated_context.extend(extra_context)
             
         if aggregated_context:

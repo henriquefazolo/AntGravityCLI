@@ -14,6 +14,26 @@ from .interfaces import OutputWriter, InputReader
 from .console_io import ConsoleOutputWriter, ConsoleInputReader
 from .parser import preprocess_prompt
 
+def _extract_subagent_name(args) -> str | None:
+    """Helper to extract subagent name from start_subagent tool call arguments."""
+    if not args:
+        return None
+    if isinstance(args, dict):
+        for key in ("agent_name", "name", "subagent_name"):
+            if key in args and args[key]:
+                return str(args[key])
+    elif isinstance(args, str):
+        import json
+        try:
+            parsed = json.loads(args)
+            if isinstance(parsed, dict):
+                for key in ("agent_name", "name", "subagent_name"):
+                    if key in parsed and parsed[key]:
+                        return str(parsed[key])
+        except Exception:
+            return args.strip()
+    return None
+
 def get_subagent_name_by_id(agent, traj_id: str) -> str:
     """Resolves a subagent name from a trajectory ID by inspecting history."""
     if not traj_id:
@@ -28,22 +48,7 @@ def get_subagent_name_by_id(agent, traj_id: str) -> str:
             if step.tool_calls:
                 for call in step.tool_calls:
                     if call.name == "start_subagent":
-                        args = call.args
-                        name = None
-                        if isinstance(args, dict):
-                            for key in ("agent_name", "name", "subagent_name"):
-                                if key in args and args[key]:
-                                    name = str(args[key])
-                        elif isinstance(args, str):
-                            import json
-                            try:
-                                parsed = json.loads(args)
-                                if isinstance(parsed, dict):
-                                    for key in ("agent_name", "name", "subagent_name"):
-                                        if key in parsed and parsed[key]:
-                                            name = str(parsed[key])
-                            except Exception:
-                                name = args.strip()
+                        name = _extract_subagent_name(call.args)
                         if name:
                             return name
     except Exception:
@@ -148,21 +153,9 @@ def get_active_subagent_name(agent) -> str | None:
             if step.tool_calls:
                 for call in step.tool_calls:
                     if call.name == "start_subagent":
-                        args = call.args
-                        if isinstance(args, dict):
-                            for key in ("agent_name", "name", "subagent_name"):
-                                if key in args and args[key]:
-                                    return str(args[key])
-                        elif isinstance(args, str):
-                            import json
-                            try:
-                                parsed = json.loads(args)
-                                if isinstance(parsed, dict):
-                                    for key in ("agent_name", "name", "subagent_name"):
-                                        if key in parsed and parsed[key]:
-                                            return str(parsed[key])
-                            except Exception:
-                                return args.strip()
+                        name = _extract_subagent_name(call.args)
+                        if name:
+                            return name
     except Exception:
         pass
     return None

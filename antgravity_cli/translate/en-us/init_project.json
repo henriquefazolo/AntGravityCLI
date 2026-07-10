@@ -1,0 +1,17 @@
+{
+  "title": "=== AntGravity Project Initializer ===",
+  "wizard_help": "This wizard will help you set up a local workspace customization folder (.agents) and a .env file.\n",
+  "prompt_api_key": "Gemini API Key (leave empty to skip)",
+  "prompt_model": "Gemini Model",
+  "prompt_language": "Language (en-us, pt-br)",
+  "prompt_yolo": "Enable YOLO Mode (bypass safety confirmations)?",
+  "creating_structure": "\n[*] Creating workspace structure...",
+  "created_folder": "  [+] Created folder: {folder}",
+  "created_template": "  [+] Created template: {filepath}",
+  "file_exists_skipping": "  [!] File '{filepath}' already exists, skipping template creation.",
+  "created_file": "  [+] Created: {filepath}",
+  "overwrote_file": "  [+] Overwrote: {filepath}",
+  "skipped_updating": "  [!] Skipped updating {filepath}",
+  "file_exists_overwrite_confirm": "A '{filepath}' file already exists. Do you want to overwrite it?",
+  "success_message": "\n[OK] AntGravity project initialized successfully!"
+}

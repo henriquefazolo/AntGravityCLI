@@ -15,8 +15,9 @@ class DisableAgentCommand(REPLCommand):
         return "command_disable_agent_desc"
 
     async def execute(self, agent, context=None) -> bool:
+        from ... import i18n
         if not context or not context.strip():
-            click.echo(f"{Fore.RED}Error: Please specify the name of the subagent to disable (e.g., /disable_agent log_analyzer){Style.RESET_ALL}")
+            click.echo(f"{Fore.RED}{i18n.t('commands', 'error_specify_agent_disable')}{Style.RESET_ALL}")
             return True
             
         agent_name = context.strip()
@@ -45,9 +46,9 @@ class DisableAgentCommand(REPLCommand):
                 break
                 
         if not target_name:
-            click.echo(f"{Fore.YELLOW}Warning: Subagent '{agent_name}' not found in the colony.{Style.RESET_ALL}")
+            click.echo(f"{Fore.YELLOW}{i18n.t('commands', 'warning_agent_not_found', agent_name=agent_name)}{Style.RESET_ALL}")
             target_name = agent_name
             
         agent._disabled_subagents.add(target_name)
-        click.echo(f"{Fore.GREEN}Subagent '{target_name}' has been disabled (delegation blocked).{Style.RESET_ALL}")
+        click.echo(f"{Fore.GREEN}{i18n.t('commands', 'agent_disabled_success', target_name=target_name)}{Style.RESET_ALL}")
         return True

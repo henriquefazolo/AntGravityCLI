@@ -7,7 +7,7 @@ from ..interfaces import DirectiveProcessor
 class FileDirectiveProcessor(DirectiveProcessor):
     """File and folder directive processor with the '@' prefix (SRP/OCP/LSP)."""
     
-    def process(self, prompt: str, skills_paths: list[str] = None) -> Tuple[str, list[str]]:
+    def process(self, prompt: str, skills_paths: list[str] = None, disabled_skills: set[str] = None) -> Tuple[str, list[str]]:
         extra_context = []
         # Accepts @[path with spaces] or @path_without_spaces (avoids emails)
         file_matches = re.finditer(r'(?<!\w)@(?:\[([^\]]+)\]|([^\s\x00-\x1F\x7F]+))', prompt)

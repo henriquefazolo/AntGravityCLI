@@ -1,1 +1,3 @@
-{}
+{
+  "failed_to_run_agent": "Error: Failed to initialize or communicate with the agent. Detail: {error}"
+}

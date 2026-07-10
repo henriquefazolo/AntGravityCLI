@@ -50,7 +50,7 @@ class HelpCommand(REPLCommand):
                 status = f" [{Fore.RED}disabled{Fore.CYAN}]" if s in disabled_skills else ""
                 click.echo(f"  {Fore.GREEN}/{s:<25}{Style.RESET_ALL}{status} - {i18n.t('list_skills', s + '_desc', default='Active skill trigger')}")
         else:
-            click.echo("  No active skills found.")
+            click.echo(i18n.t("commands", "no_active_skills"))
 
         # 3. Colony Subagents
         click.echo(f"\n{Fore.CYAN}Colony Subagents (Ants):{Style.RESET_ALL}")
@@ -62,7 +62,7 @@ class HelpCommand(REPLCommand):
                 status = f" [{Fore.RED}disabled{Fore.CYAN}]" if sa.name in disabled_agents else ""
                 click.echo(f"  {Fore.GREEN}:{sa.name:<25}{Style.RESET_ALL}{status} - {sa.description}")
         else:
-            click.echo("  No subagents registered in the colony.")
+            click.echo(i18n.t("commands", "no_subagents_registered"))
             
         click.echo(f"\n{Fore.MAGENTA}{'-' * 40}{Style.RESET_ALL}")
         return True

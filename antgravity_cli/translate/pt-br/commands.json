@@ -1,0 +1,17 @@
+{
+  "error_specify_skill_disable": "Erro: Por favor, especifique o nome da skill para desativar (ex: /disable_skill create_txt_file)",
+  "warning_skill_not_found": "Aviso: Skill '{skill_name}' não foi encontrada entre as skills ativas.",
+  "skill_disabled_success": "A skill '{skill_name}' foi desativada para esta sessão.",
+  "error_specify_agent_disable": "Erro: Por favor, especifique o nome do subagente para desativar (ex: /disable_agent log_analyzer)",
+  "warning_agent_not_found": "Aviso: Subagente '{agent_name}' não foi encontrado na colônia.",
+  "agent_disabled_success": "O subagente '{target_name}' foi desativado (delegação bloqueada).",
+  "error_specify_skill_enable": "Erro: Por favor, especifique o nome da skill para ativar (ex: /enable_skill create_txt_file)",
+  "skill_enabled_success": "A skill '{skill_name}' foi ativada para esta sessão.",
+  "skill_not_disabled": "A skill '{skill_name}' não está desativada no momento.",
+  "error_specify_agent_enable": "Erro: Por favor, especifique o nome do subagente para ativar (ex: /enable_agent log_analyzer)",
+  "agent_enabled_success": "O subagente '{target_name}' foi ativado (delegação permitida).",
+  "agent_not_disabled": "O subagente '{agent_name}' não está desativado no momento.",
+  "no_active_skills": "  Nenhuma skill ativa encontrada.",
+  "no_subagents_registered": "  Nenhum subagente registrado na colônia.",
+  "no_subagents_colony": "  Nenhum subagente registrado nesta colônia."
+}
