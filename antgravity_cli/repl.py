@@ -192,7 +192,7 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
     try:
         app_version = version("AntGravityCLI")
     except PackageNotFoundError:
-        app_version = "1.2.2"
+        app_version = "1.2.3"
 
     # Render Option 1 colorized solid block ant art logo
     click.echo(f"\n{i18n.t('repl', 'version_label', version=app_version)}")
