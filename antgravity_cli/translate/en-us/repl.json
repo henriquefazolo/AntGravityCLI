@@ -15,5 +15,12 @@
   "error_during_conversation": "Error during conversation: {error}",
   "and_more": "and more",
   "skills_label": "Skills",
-  "version_label": "Version {version}"
+  "version_label": "Version {version}",
+  "active_skills_banner": "  {count} skills active | /help for details",
+  "command_reload_desc": "Reload all workspace skills and subagents",
+  "command_clear_desc": "Clear the terminal screen",
+  "command_history_desc": "Display recent prompt history (usage: /history [count])",
+  "command_save_desc": "Save active conversation history to a file (usage: /save name)",
+  "command_load_desc": "Load conversation history from a file (usage: /load name)",
+  "command_config_desc": "Display active configuration parameters"
 }

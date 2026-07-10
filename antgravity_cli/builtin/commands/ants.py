@@ -1,6 +1,7 @@
 import click
 from colorama import Fore, Style
 from .base import REPLCommand
+from ... import i18n
 
 class AntsCommand(REPLCommand):
     """Command that lists details of all registered subagents (ants)."""

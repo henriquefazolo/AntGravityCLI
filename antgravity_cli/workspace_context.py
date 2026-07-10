@@ -13,8 +13,8 @@ class WorkspaceContext:
     config.py, repl.py, help.py, ants.py, disable_agent.py, and disable_skill.py.
     """
 
-    def __init__(self, workspaces: List[str], skills_paths: Optional[List[str]] = None):
-        self._workspaces = workspaces or [os.path.abspath(".")]
+    def __init__(self, workspaces: Optional[List[str]] = None, skills_paths: Optional[List[str]] = None):
+        self._workspaces = [os.path.abspath(w) for w in workspaces] if workspaces else [os.path.abspath(".")]
         self._skills_paths = skills_paths or []
         self._subagent_cache: Optional[List[SubagentConfig]] = None
         self._skills_cache: Optional[List[str]] = None
@@ -45,24 +45,32 @@ class WorkspaceContext:
         return paths
 
     def get_skills_search_paths(self) -> List[str]:
-        """Returns the effective list of skills search paths, with builtin fallback."""
-        if self._skills_paths:
-            return list(self._skills_paths)
-
+        """Returns the effective list of skills search paths, with builtin fallback, absolute and normalized."""
         paths = []
-        for ws in self._workspaces:
-            ws_skills = os.path.join(ws, "skills")
-            ws_agents_skills = os.path.join(ws, ".agents", "skills")
-            if os.path.isdir(ws_skills) and ws_skills not in paths:
-                paths.append(ws_skills)
-            if os.path.isdir(ws_agents_skills) and ws_agents_skills not in paths:
-                paths.append(ws_agents_skills)
+        if self._skills_paths:
+            raw_paths = list(self._skills_paths)
+        else:
+            raw_paths = []
+            for ws in self._workspaces:
+                ws_skills = os.path.join(ws, "skills")
+                ws_agents_skills = os.path.join(ws, ".agents", "skills")
+                if os.path.isdir(ws_skills):
+                    raw_paths.append(ws_skills)
+                if os.path.isdir(ws_agents_skills):
+                    raw_paths.append(ws_agents_skills)
 
+        # Always include the script's physical installation directory's builtin/skills folder
         from .utils import get_base_path
         cli_skills_dir = os.path.join(get_base_path(), "builtin", "skills")
-        if os.path.isdir(cli_skills_dir) and cli_skills_dir not in paths:
-            paths.append(cli_skills_dir)
+        if os.path.isdir(cli_skills_dir) and cli_skills_dir not in raw_paths:
+            raw_paths.append(cli_skills_dir)
 
+        # Normalize and deduplicate
+        for p in raw_paths:
+            if p:
+                abs_p = os.path.abspath(os.path.normpath(p))
+                if abs_p not in paths:
+                    paths.append(abs_p)
         return paths
 
     def discover_subagents(self, force_refresh: bool = False) -> List[SubagentConfig]:

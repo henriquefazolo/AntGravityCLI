@@ -15,5 +15,12 @@
   "error_during_conversation": "Erro durante a conversação: {error}",
   "and_more": "e mais",
   "skills_label": "Skills",
-  "version_label": "Versão {version}"
+  "version_label": "Versão {version}",
+  "active_skills_banner": "  {count} skills ativas | /help para detalhes",
+  "command_reload_desc": "Recarregar todas as skills e subagentes do workspace",
+  "command_clear_desc": "Limpar a tela do console",
+  "command_history_desc": "Exibir histórico de prompts recentes (uso: /history [quantidade])",
+  "command_save_desc": "Salvar o histórico de conversação ativo em arquivo (uso: /save nome)",
+  "command_load_desc": "Carregar histórico de conversação a partir de arquivo (uso: /load nome)",
+  "command_config_desc": "Exibir parâmetros de configuração ativos"
 }

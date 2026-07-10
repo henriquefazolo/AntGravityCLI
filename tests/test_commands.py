@@ -29,18 +29,32 @@ class TestAntigravityCommands(unittest.TestCase):
         self.assertIn("/enable_skill", cmd_map)
         self.assertIn("/disable_agent", cmd_map)
         self.assertIn("/enable_agent", cmd_map)
+        self.assertIn("/reload", cmd_map)
+        self.assertIn("/clear", cmd_map)
+        self.assertIn("/cls", cmd_map)
+        self.assertIn("/history", cmd_map)
+        self.assertIn("/save", cmd_map)
+        self.assertIn("/load", cmd_map)
+        self.assertIn("/config", cmd_map)
         
         triggers = get_command_triggers()
         self.assertEqual(triggers, [
             "/ants",
+            "/clear",
+            "/cls",
+            "/config",
             "/disable_agent",
             "/disable_skill",
             "/enable_agent",
             "/enable_skill",
             "/exit",
             "/help",
+            "/history",
+            "/load",
             "/quit",
+            "/reload",
             "/reset",
+            "/save",
             "/subagents",
             "?"
         ])

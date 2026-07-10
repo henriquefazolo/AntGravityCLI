@@ -27,3 +27,6 @@ build/
 # Agent Data
 /.agents
 
+# Test environment
+test_venv_temp/
+

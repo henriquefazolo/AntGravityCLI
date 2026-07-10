@@ -42,12 +42,12 @@ class TestAntigravityREPL(unittest.TestCase):
     @patch('antgravity_cli.repl.click.echo')
     @patch('antgravity_cli.repl._get_repl_suggestions')
     def test_run_repl_displays_skills_limit(self, mock_get_repl_suggestions, mock_echo):
-        """Verify that the REPL welcome banner prints local skills, limiting to 5 with an 'and more' suffix."""
+        """Verify that the welcome banner prints local skills in compact format when there are more than 5."""
         class MockInputReader(InputReader):
             async def read_input(self, prompt_text: str, suggestions=None, *args, **kwargs) -> str:
                 return "/quit"
                 
-        # Scenario 1: More than 5 skills (should limit and append 'and more')
+        # Scenario 1: More than 5 skills (should show compact banner)
         mock_get_repl_suggestions.return_value = ["/exit", "/quit", "/reset", "/s1", "/s2", "/s3", "/s4", "/s5", "/s6", "/s7"]
         mock_agent = MagicMock()
         mock_agent.config = MagicMock()
@@ -56,24 +56,16 @@ class TestAntigravityREPL(unittest.TestCase):
         i18n.set_language("en-us")
         asyncio.run(run_repl(mock_agent, [], reader=MockInputReader()))
         
-        any_match_s1_en = any(f"  {Fore.GREEN}/s1{Style.RESET_ALL}" == args[0] for args, _ in mock_echo.call_args_list)
-        any_match_s5_en = any(f"  {Fore.GREEN}/s5{Style.RESET_ALL}" == args[0] for args, _ in mock_echo.call_args_list)
-        any_match_limit_en = any(f"  ... and more" == args[0] for args, _ in mock_echo.call_args_list)
-        
-        self.assertTrue(any_match_s1_en)
-        self.assertTrue(any_match_s5_en)
-        self.assertTrue(any_match_limit_en)
+        any_match_compact_en = any("  7 skills active | /help for details" == args[0] for args, _ in mock_echo.call_args_list)
+        self.assertTrue(any_match_compact_en)
 
         # Scenario 2: Portuguese switches correctly
         mock_echo.reset_mock()
         i18n.set_language("pt-br")
         asyncio.run(run_repl(mock_agent, [], reader=MockInputReader()))
         
-        any_match_s1_pt = any(f"  {Fore.GREEN}/s1{Style.RESET_ALL}" == args[0] for args, _ in mock_echo.call_args_list)
-        any_match_limit_pt = any(f"  ... e mais" == args[0] for args, _ in mock_echo.call_args_list)
-        
-        self.assertTrue(any_match_s1_pt)
-        self.assertTrue(any_match_limit_pt)
+        any_match_compact_pt = any("  7 skills ativas | /help para detalhes" == args[0] for args, _ in mock_echo.call_args_list)
+        self.assertTrue(any_match_compact_pt)
 
     @patch('antgravity_cli.repl.click.echo')
     @patch('antgravity_cli.repl._get_repl_suggestions')

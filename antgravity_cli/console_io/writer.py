@@ -1,14 +1,10 @@
 import asyncio
-import colorama
 from colorama import Fore, Style
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.live import Live
 from ..interfaces import OutputWriter
 from .. import i18n
-
-# Initialize colorama for console color support (especially Windows)
-colorama.init()
 
 class ConsoleOutputWriter(OutputWriter):
     """Concrete terminal output writer using colorama and rich for Markdown (SRP)."""

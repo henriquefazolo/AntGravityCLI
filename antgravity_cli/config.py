@@ -50,35 +50,11 @@ def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skil
             sys_inst = system_instruction
 
     # 4. Resolve Skills using WorkspaceContext
-    raw_skills = list(skills_path) if skills_path else []
+    ws_context = WorkspaceContext(resolved_workspace, list(skills_path) if skills_path else None)
+    resolved_skills = ws_context.get_skills_search_paths()
+    ws_context.skills_paths = resolved_skills
 
-    # If no custom skills paths were explicitly provided, dynamically search the active workspaces
-    if not skills_path:
-        for ws in resolved_workspace:
-            workspace_skills = os.path.join(ws, "skills")
-            workspace_agents_skills = os.path.join(ws, ".agents", "skills")
-            if os.path.isdir(workspace_skills) and workspace_skills not in raw_skills:
-                raw_skills.append(workspace_skills)
-            if os.path.isdir(workspace_agents_skills) and workspace_agents_skills not in raw_skills:
-                raw_skills.append(workspace_agents_skills)
-
-    # Always include the script's physical installation directory's builtin/skills folder
-    from .utils import get_base_path
-    base_dir = get_base_path()
-    cli_skills_dir = os.path.join(base_dir, "builtin", "skills")
-    if os.path.isdir(cli_skills_dir) and cli_skills_dir not in raw_skills:
-        raw_skills.append(cli_skills_dir)
-
-    # Normalize paths to absolute normalized format and deduplicate (preserving order)
-    resolved_skills = []
-    for path in raw_skills:
-        if path:
-            abs_path = os.path.abspath(os.path.normpath(path))
-            if abs_path not in resolved_skills:
-                resolved_skills.append(abs_path)
-
-    # 5. Create WorkspaceContext and discover subagents
-    ws_context = WorkspaceContext(resolved_workspace, resolved_skills)
+    # 5. Discover subagents
     resolved_subagents = ws_context.discover_subagents()
 
     # 5b. Resolve subagent tools to prevent ValueError in main agent config
