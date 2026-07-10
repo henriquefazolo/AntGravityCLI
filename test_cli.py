@@ -477,7 +477,8 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         'ANTGRAVITY_SYSTEM_INSTRUCTION': 'custom-instruction',
         'ANTGRAVITY_SKILLS_PATH': os.path.abspath("."),
         'ANTGRAVITY_SILENT': '1',
-        'ANTGRAVITY_VERBOSE': '1'
+        'ANTGRAVITY_VERBOSE': '1',
+        'ANTGRAVITY_VERBOSE_SUBAGENTS': '1'
     })
     def test_cli_environment_variables_comprehensive(self, mock_run_cli):
         """Verify that all CLI options fall back to environment variables correctly."""
@@ -496,6 +497,7 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertEqual(args[6], (os.path.abspath("."),))  # skills_path (as tuple)
         self.assertEqual(kwargs.get('silent'), True)  # silent
         self.assertEqual(kwargs.get('verbose'), True)  # verbose
+        self.assertEqual(kwargs.get('verbose_subagents'), True)  # verbose_subagents
         self.assertEqual(kwargs.get('language'), 'pt-br')  # language
 
     @patch('dotenv.load_dotenv')
@@ -982,6 +984,76 @@ Log instructions."""
             self.assertNotIn("/skill_example", suggestions)
         finally:
             shutil.rmtree(tmp_dir)
+
+    @patch('antgravity_cli.repl.ConsoleOutputWriter')
+    def test_stream_chat_response_verbose_subagents(self, mock_writer_class):
+        """Verify that stream_chat_response formats subagent chunks under verbose_subagents."""
+        import asyncio
+        from antgravity_cli.repl import stream_chat_response
+        from google.antigravity.types import Thought, Text, ToolCall, ToolResult
+        
+        mock_writer = mock_writer_class.return_value
+        mock_agent = MagicMock()
+        
+        # Mock step in history representing a subagent step
+        class DummyStep:
+            def __init__(self, step_index, trajectory_id):
+                self.step_index = step_index
+                self.trajectory_id = trajectory_id
+                self.tool_calls = []
+                
+        # Mock active subagent start tool call
+        start_call_step = DummyStep(0, "parent-traj")
+        subagent_tool_call = MagicMock()
+        subagent_tool_call.name = "start_subagent"
+        subagent_tool_call.args = {"name": "TestSubagent"}
+        start_call_step.tool_calls = [subagent_tool_call]
+        
+        subagent_step = DummyStep(1, "subagent-traj")
+        subagent_tool_call_exec = MagicMock()
+        subagent_tool_call_exec.name = "read_file"
+        subagent_tool_call_exec.id = "t1"
+        subagent_step.tool_calls = [subagent_tool_call_exec]
+        
+        mock_agent.conversation.history = [start_call_step, subagent_step]
+        mock_agent.conversation.connection._main_trajectory_id = "parent-traj"
+        
+        # Mock connection response yielding a Thought chunk from the subagent
+        mock_response = MagicMock()
+        async def mock_chunks():
+            yield Thought(step_index=1, text="Subagent logic thoughts")
+            yield Text(step_index=1, text="Subagent output text")
+            yield ToolCall(id="t1", name="read_file", args={"path": "a.txt"})
+            yield ToolResult(id="t1", name="read_file", result="content")
+            
+        mock_response.chunks = mock_chunks()
+        
+        async def mock_chat(prompt):
+            return mock_response
+        mock_agent.chat = mock_chat
+        
+        # Test with verbose_subagents=True
+        mock_writer.reset_mock()
+        asyncio.run(stream_chat_response(
+            mock_agent, "test", writer=mock_writer, silent=False, verbose=False, verbose_subagents=True
+        ))
+        
+        # Assert subagent thoughts, tool calls, and results are written with prefix
+        mock_writer.write_thought.assert_called_once_with("[TestSubagent] Subagent logic thoughts")
+        mock_writer.write_tool_call.assert_called_once_with("[TestSubagent] read_file", {"path": "a.txt"})
+        mock_writer.write_tool_result.assert_called_once_with("[TestSubagent] read_file", "content", None)
+        
+        # Test with verbose_subagents=False
+        mock_writer.reset_mock()
+        mock_response.chunks = mock_chunks() # re-create generator
+        asyncio.run(stream_chat_response(
+            mock_agent, "test", writer=mock_writer, silent=False, verbose=False, verbose_subagents=False
+        ))
+        
+        # Assert subagent thoughts, tool calls, and results are NOT written
+        mock_writer.write_thought.assert_not_called()
+        mock_writer.write_tool_call.assert_not_called()
+        mock_writer.write_tool_result.assert_not_called()
 
 if __name__ == '__main__':
     unittest.main()

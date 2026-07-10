@@ -8,7 +8,7 @@ from .repl import run_repl, stream_chat_response
 from .parser import preprocess_prompt
 from .console_io import ConsoleOutputWriter, ConsoleInputReader
 
-async def run_cli(prompt, model, yolo, workspace, system_instruction, api_key, skills_path, silent=False, verbose=False, language="en-us"):
+async def run_cli(prompt, model, yolo, workspace, system_instruction, api_key, skills_path, silent=False, verbose=False, verbose_subagents=False, language="en-us"):
     """Initializes the agent configurations and starts either a single execution or the REPL."""
     i18n.set_language(language)
     try:
@@ -24,8 +24,8 @@ async def run_cli(prompt, model, yolo, workspace, system_instruction, api_key, s
         # Single Prompt
         async with Agent(config) as agent:
             processed_prompt = preprocess_prompt(prompt, config.skills_paths)
-            await stream_chat_response(agent, processed_prompt, writer, silent=silent, verbose=verbose)
+            await stream_chat_response(agent, processed_prompt, writer, silent=silent, verbose=verbose, verbose_subagents=verbose_subagents)
     else:
         # Interactive Mode (REPL)
         async with Agent(config) as agent:
-            await run_repl(agent, config.skills_paths, reader, writer, silent=silent, verbose=verbose)
+            await run_repl(agent, config.skills_paths, reader, writer, silent=silent, verbose=verbose, verbose_subagents=verbose_subagents)
