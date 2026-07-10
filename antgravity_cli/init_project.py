@@ -70,15 +70,13 @@ capabilities:
   enabled_tools:
     - READ_FILE
     - WRITE_FILE
-tools:
-  - run_custom_analyzer
 ---
 # Subagent Example Instructions
 
 You are subagent_example, a specialist agent designed to handle custom subtasks.
 Your goal is to:
 1. Receive instructions from the parent agent.
-2. Run custom analysis using your tools.
+2. Run analysis and perform required tasks.
 3. Return the result back to the parent agent.
 """
         with open(subagent_md_path, "w", encoding="utf-8") as f:
