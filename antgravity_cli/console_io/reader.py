@@ -12,8 +12,7 @@ try:
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
 
-# Initialize colorama for console color support (especially Windows)
-colorama.init()
+# colorama is initialized globally in main.py
 
 class ConsoleInputReader(InputReader):
     """Concrete terminal input reader using input() or prompt_toolkit (SRP)."""
@@ -27,8 +26,8 @@ class ConsoleInputReader(InputReader):
             try:
                 # Initialize the session on-demand to avoid failure during instantiation in tests or CI/CD
                 if self._session is None:
-                    import os
-                    history_file = os.path.expanduser("~/.antgravity_history")
+                    from ..utils import get_history_file_path
+                    history_file = get_history_file_path()
                     self._session = PromptSession(history=FileHistory(history_file))
                 
                 completer = AntCompleter(

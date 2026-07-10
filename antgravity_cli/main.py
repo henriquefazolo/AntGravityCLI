@@ -28,10 +28,22 @@ else:
     if os.path.exists(cwd_env) and os.path.normcase(cwd_env) != os.path.normcase(os.path.abspath(base_env)):
         load_dotenv(cwd_env, override=True)
 
+import colorama
+from importlib.metadata import version, PackageNotFoundError
+
+# Centralized colorama initialization for console colors
+colorama.init()
+
+try:
+    __version__ = version("AntGravityCLI")
+except PackageNotFoundError:
+    __version__ = "1.2.0"
+
 from .runner import run_cli
 
 
 @click.group(invoke_without_command=True)
+@click.version_option(__version__, '--version', '-V', message='%(prog)s %(version)s')
 @click.argument('prompt', required=False)
 @click.option('--model', '-m', envvar='GEMINI_MODEL', default='gemini-3.1-flash-lite', help='Gemini model to be used.')
 @click.option('--yolo', '-y', is_flag=True, envvar='ANTGRAVITY_YOLO', help='Bypass safety confirmations and execute all actions automatically.')

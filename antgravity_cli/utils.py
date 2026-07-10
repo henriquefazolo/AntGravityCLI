@@ -47,3 +47,38 @@ def get_workspace_files_and_folders(workspace_path: str) -> list[str]:
             suggestions.append(rel_path_formatted)
 
     return sorted(suggestions)
+
+
+def get_history_file_path() -> str:
+    """Returns the platform-specific standard location for the history file.
+    
+    - Windows: %LOCALAPPDATA%\AntGravity\history
+    - macOS: ~/Library/Application Support/AntGravity/history
+    - Linux: ~/.local/share/antgravity/history (or $XDG_DATA_HOME/antgravity/history)
+    """
+    home = os.path.expanduser("~")
+    
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if local_app_data:
+        history_dir = os.path.join(local_app_data, "AntGravity")
+    elif sys.platform == "win32":
+        app_data = os.environ.get("APPDATA")
+        if app_data:
+            history_dir = os.path.join(app_data, "AntGravity")
+        else:
+            history_dir = os.path.join(home, ".antgravity")
+    elif sys.platform == "darwin":
+        history_dir = os.path.join(home, "Library", "Application Support", "AntGravity")
+    else:
+        xdg_data = os.environ.get("XDG_DATA_HOME")
+        if xdg_data:
+            history_dir = os.path.join(xdg_data, "antgravity")
+        else:
+            history_dir = os.path.join(home, ".local", "share", "antgravity")
+
+    try:
+        os.makedirs(history_dir, exist_ok=True)
+    except Exception:
+        return os.path.join(home, ".antgravity_history")
+
+    return os.path.join(history_dir, "history")

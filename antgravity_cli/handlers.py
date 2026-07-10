@@ -3,8 +3,7 @@ from colorama import Fore, Style
 
 from . import i18n
 
-# Initialize colorama for console color support (especially Windows)
-colorama.init()
+# colorama is initialized globally in main.py
 
 def cli_ask_user_handler(tool_call) -> bool:
     """Handler to request user approval in the terminal in safe mode."""

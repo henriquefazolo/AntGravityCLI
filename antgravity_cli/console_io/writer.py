@@ -64,8 +64,8 @@ class ConsoleOutputWriter(OutputWriter):
             if self._loading_task:
                 self._loading_task.cancel()
                 self._loading_task = None
-            # Clear the line by overwriting it with spaces using carriage return
-            print("\r" + " " * 40 + "\r", end="", flush=True)
+            # Clear the line using ANSI line-clear sequence and return carriage to start
+            print("\r\033[2K", end="", flush=True)
 
     def write_thought(self, text: str) -> None:
         self.stop_loading()
