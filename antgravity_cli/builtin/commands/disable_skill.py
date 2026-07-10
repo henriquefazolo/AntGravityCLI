@@ -20,6 +20,9 @@ class DisableSkillCommand(REPLCommand):
             return True
             
         skill_name = context.strip()
+        if skill_name.startswith("/"):
+            skill_name = skill_name[1:]
+            
         if not hasattr(agent, "_disabled_skills"):
             agent._disabled_skills = set()
             

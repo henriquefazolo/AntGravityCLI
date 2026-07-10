@@ -19,6 +19,9 @@ class EnableAgentCommand(REPLCommand):
             return True
             
         agent_name = context.strip()
+        if agent_name.startswith(":"):
+            agent_name = agent_name[1:]
+            
         target_name = None
         if hasattr(agent, "_disabled_subagents"):
             for name in list(agent._disabled_subagents):
