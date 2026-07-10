@@ -7,6 +7,13 @@ from google.antigravity.hooks import policy
 from . import i18n
 from .handlers import cli_ask_user_handler
 
+def _make_dummy_tool(name: str):
+    def dummy_tool(*args, **kwargs) -> str:
+        """Dummy tool placeholder for subagent tools validation."""
+        return "Placeholder execution"
+    dummy_tool.__name__ = name
+    return dummy_tool
+
 def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skills_path) -> LocalAgentConfig:
     """Configures and returns the agent's LocalAgentConfig, resolving keys, paths, and policies."""
     # 1. Resolve API Key
@@ -77,6 +84,16 @@ def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skil
     from .subagents import discover_subagents_in_paths
     resolved_subagents = discover_subagents_in_paths(subagent_paths)
 
+    # 5b. Resolve subagent tools to prevent ValueError in main agent config
+    dummy_tools = []
+    seen_tools = set()
+    for subagent in resolved_subagents:
+        if subagent.tools:
+            for tool in subagent.tools:
+                if isinstance(tool, str) and tool not in seen_tools:
+                    dummy_tools.append(_make_dummy_tool(tool))
+                    seen_tools.add(tool)
+
     # 6. Build Agent Configuration
     return LocalAgentConfig(
         model=model,
@@ -85,5 +102,6 @@ def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skil
         system_instructions=sys_inst,
         workspaces=resolved_workspace,
         skills_paths=resolved_skills if resolved_skills else None,
-        subagents=resolved_subagents
+        subagents=resolved_subagents,
+        tools=dummy_tools if dummy_tools else None
     )

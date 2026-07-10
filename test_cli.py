@@ -76,6 +76,41 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertEqual(config.skills_paths[0], os.path.abspath("."))
         self.assertEqual(config.skills_paths[1], cli_skills_dir)
 
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "dummy_key"})
+    @patch('antgravity_cli.subagents.discover_subagents_in_paths')
+    def test_setup_agent_config_registers_subagent_tools(self, mock_discover):
+        """Verify that setup_agent_config discovers subagent tools and registers them as dummy tools."""
+        from google.antigravity.types import SubagentConfig
+        
+        # Setup mock subagent that requires a custom tool
+        mock_subagent = SubagentConfig(
+            name="test_subagent",
+            description="Test subagent requiring a custom tool",
+            system_instructions="instructions",
+            capabilities=None,
+            tools=["run_mock_custom_tool"]
+        )
+        mock_discover.return_value = [mock_subagent]
+        
+        config = setup_agent_config(
+            model="gemini-3.5-flash",
+            yolo=False,
+            workspace=["."],
+            system_instruction=None,
+            api_key=None,
+            skills_path=[]
+        )
+        
+        # Verify tools are registered on the main config
+        self.assertIsNotNone(config.tools)
+        self.assertEqual(len(config.tools), 1)
+        self.assertEqual(config.tools[0].__name__, "run_mock_custom_tool")
+        
+        # Verify we can execute the dummy tool
+        result = config.tools[0]()
+        self.assertEqual(result, "Placeholder execution")
+
+
     def test_i18n_formatting_warning(self):
         """Verify that i18n.t raises a UserWarning when format arguments are mismatched."""
         from antgravity_cli import i18n
