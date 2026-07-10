@@ -13,6 +13,19 @@ A portable and interactive command-line interface (CLI) developed in Python to f
 
 ## Installation and Setup
 
+### Global Installation (via PyPI)
+Install the package globally or in your virtual environment:
+```powershell
+pip install AntGravityCLI
+```
+Once installed, you can run the CLI from anywhere using:
+```powershell
+antgravity [options] [prompt]
+# or the shortcut alias:
+ant [options] [prompt]
+```
+
+### Development Setup
 1. Make sure the virtual environment is activated:
    ```powershell
    .\.venv\Scripts\activate
@@ -21,6 +34,14 @@ A portable and interactive command-line interface (CLI) developed in Python to f
    ```powershell
    cp .env.example .env
    ```
+
+### 3. Interactive Workspace Setup
+To quickly initialize a new project workspace with the required folders (`.agents/`, `.agents/skills/`, `.agents/subagents/`), standard files, and a `.env` file, simply run:
+```powershell
+ant init
+```
+*(Or `python main.py init` if running from source).*
+
 
 ### Environment Resolution and Default Values
 
@@ -65,8 +86,12 @@ python main.py
 **Useful commands in Interactive Mode:**
 - `/reset`: Clears conversation history and resets agent context.
 - `/exit` or `/quit`: Closes the interactive terminal.
+- `/help` or `?`: Displays a detailed help message with all commands, active skills, and subagents.
+- `/ants` or `/subagents`: Lists all registered colony subagents and their capabilities.
 
-**Auto-completion and Active Skills:**
+**Auto-completion and Interactive Features:**
+* **Persistent Command History**: Command history is automatically saved to and loaded from `~/.antgravity_history` across sessions, allowing you to use Up/Down arrow keys to navigate past inputs.
+* **Active Agent Prompt Indicator**: When a subagent is executing or was invoked, the prompt dynamically updates (e.g. `You (-> SubagentName) >` or `Você (-> SubagentName) >`) to show you the current agentic context.
 * **Real-time Auto-completion**: As you type `/` in the prompt (either at the start or mid-sentence), a dynamic dropdown menu displaying all special commands and active skills will instantly pop up. Similarly, typing `@` triggers dynamic file and folder suggestions from your workspace repository (ignoring folders like `.git`, `.venv`, etc.), and typing `:` triggers real-time suggestions of discovered subagents (dynamically refreshed as you create them). The autocomplete supports middle-of-path/substring matching, prioritizes exact prefix matches, is case-insensitive, stays open stably when you delete characters (Backspace), and ignores regular chat text and trailing spaces to maintain a clean console.
 * **Banner Skills Listing**: At REPL startup, a welcome banner displays all available active workspace skills one per line, limited to 5. If more than 5 exist, a localized ellipsis (`... and more` or `... e mais`) is appended.
 * **Hybrid Skills Resolution**: By default (when `--skills-path` / `-k` is not specified), the welcome banner list, autocomplete menu, and prompt parser strictly load active skills from the CLI script's physical installation directory (`.agents/skills`), even when executing the CLI from or targeting a different CWD/workspace. This ensures that internal CLI utility skills (like `/generate_skill_template`) are always loaded and executable. If you explicitly pass one or more custom paths via the `--skills-path` / `-k` flag, the CLI dynamically loads **both** your custom/local workspace skills and the physical Ant installation skills simultaneously, giving you access to both sets of tools in the REPL session.
