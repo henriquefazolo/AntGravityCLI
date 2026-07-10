@@ -61,7 +61,8 @@ def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
         
     discovered = discover_skills_in_paths(paths_to_search)
     for s in discovered:
-        suggestions.append(f"/{s}")
+        if s != "skill_example":
+            suggestions.append(f"/{s}")
         
     return sorted(list(set(suggestions)))
 
@@ -167,9 +168,9 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
             from .subagents import discover_subagents_in_paths
             discovered_subagents = discover_subagents_in_paths(subagent_paths)
             
-            # Filter out disabled subagents
+            # Filter out disabled subagents and example templates
             disabled_agents = getattr(agent, "_disabled_subagents", set())
-            active_subagents = [sa for sa in discovered_subagents if sa.name not in disabled_agents]
+            active_subagents = [sa for sa in discovered_subagents if sa.name not in disabled_agents and sa.name != "subagent_example"]
             subagent_names = [sa.name for sa in active_subagents]
             
             # Sync in-memory agent configuration subagents list
