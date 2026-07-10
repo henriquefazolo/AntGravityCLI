@@ -876,6 +876,10 @@ Log instructions."""
             # Check AGENTS.md
             self.assertTrue(os.path.isfile(os.path.join(".agents", "AGENTS.md")))
             
+            # Check skill_example and subagent_example templates
+            self.assertTrue(os.path.isfile(os.path.join(".agents", "skills", "skill_example", "SKILL.md")))
+            self.assertTrue(os.path.isfile(os.path.join(".agents", "subagents", "subagent_example", "AGENT.md")))
+            
             # Check .env file
             self.assertTrue(os.path.isfile(".env"))
             with open(".env", "r", encoding="utf-8") as f:
@@ -883,7 +887,7 @@ Log instructions."""
                 self.assertIn("GEMINI_API_KEY=test_api_key", content)
                 self.assertIn("GEMINI_MODEL=gemini-3.1-flash-lite", content)
                 self.assertIn("ANTGRAVITY_LANG=pt-br", content)
-                self.assertIn("ANTGRAVITY_YOLO=True", content)
+                self.assertIn("ANTGRAVITY_YOLO=true", content)
         finally:
             os.chdir(orig_cwd)
             shutil.rmtree(tmp_dir)
@@ -958,6 +962,24 @@ Log instructions."""
             # When disabled:
             prompt2 = preprocess_prompt("Please run /test_skill", skills_paths=[tmp_dir], disabled_skills={"test_skill"})
             self.assertNotIn("Secret Instructions", prompt2)
+        finally:
+            shutil.rmtree(tmp_dir)
+
+    def test_suggestions_exclude_templates(self):
+        """Verify that skill_example and subagent_example are excluded from autocompletion."""
+        from antgravity_cli.repl import _get_repl_suggestions
+        import tempfile
+        import shutil
+        
+        # Test skill_example exclusion in _get_repl_suggestions
+        tmp_dir = tempfile.mkdtemp()
+        os.makedirs(os.path.join(tmp_dir, "skill_example"))
+        with open(os.path.join(tmp_dir, "skill_example", "SKILL.md"), "w", encoding="utf-8") as f:
+            f.write("test")
+            
+        try:
+            suggestions = _get_repl_suggestions([tmp_dir])
+            self.assertNotIn("/skill_example", suggestions)
         finally:
             shutil.rmtree(tmp_dir)
 
