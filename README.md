@@ -64,6 +64,7 @@ If a `.env` file is not present or a specific variable is not set, the CLI falls
 | `ANTGRAVITY_SKILLS_PATH` | `--skills-path` / `-k` | Custom workspace skills folders | *None* |
 | `ANTGRAVITY_SILENT` | `--silent` | Hide thoughts and tool execution logs | `False` |
 | `ANTGRAVITY_VERBOSE` | `--verbose` / `-v` | Show internal reasoning details | `False` |
+| `ANTGRAVITY_VERBOSE_SUBAGENTS` | `--verbose-subagents` | Show internal reasoning details for subagents | `False` |
 
 *(You can always override these values dynamically by passing their respective flags on the command line).*
 
@@ -130,6 +131,7 @@ You can customize the CLI behavior using flags:
 | `--skills-path` | `-k` | `ANTGRAVITY_SKILLS_PATH` | Path to skills folders (can be repeated). If not provided and the `./skills` folder exists, it will be loaded by default. |
 | `--silent` | | `ANTGRAVITY_SILENT` | Hides internal thoughts and tool calls in the terminal. |
 | `--verbose` | `-v` | `ANTGRAVITY_VERBOSE` | Displays the AI's internal reasoning thoughts (Chain of Thought) in gray on the console. |
+| `--verbose-subagents` | | `ANTGRAVITY_VERBOSE_SUBAGENTS` | Displays internal reasoning thoughts and tool execution logs for subagents, prefixed with `[SubagentName]`. |
 | `--language` | `-l` | `ANTGRAVITY_LANG` | Specifies the output translation language (default: `en-us`, e.g. `pt-br`, `en-us`). |
 | `--env-file` | `-e` | | Path to a custom `.env` file to load configurations from (bypasses default global and local .env files). |
 
