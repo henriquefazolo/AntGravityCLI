@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "AntGravityCLI"
-version = "1.1.7"
+version = "1.1.8"
 authors = [
     { name = "Henrique Fazolo", email = "henriquefazolo@gmail.com" }
 ]
@@ -34,8 +34,8 @@ Homepage = "https://github.com/henriquefazolo/AntGravityCLI"
 antgravity = "antgravity_cli.main:main"
 ant = "antgravity_cli.main:main"
 
-[tool.setuptools]
-packages = ["antgravity_cli"]
+[tool.setuptools.packages.find]
+include = ["antgravity_cli*"]
 
 [tool.setuptools.package-data]
 "antgravity_cli" = [
