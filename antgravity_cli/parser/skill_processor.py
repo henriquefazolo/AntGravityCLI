@@ -7,7 +7,7 @@ from ..interfaces import DirectiveProcessor
 class SkillDirectiveProcessor(DirectiveProcessor):
     """Skill directive processor with the '/' prefix (SRP/OCP/LSP)."""
     
-    def process(self, prompt: str, skills_paths: list[str] = None, disabled_skills: set[str] = None) -> Tuple[str, list[str]]:
+    def process(self, prompt: str, skills_paths: list[str] | None = None, disabled_skills: set[str] | None = None) -> Tuple[str, list[str]]:
         extra_context = []
         # Ignores special REPL commands dynamically
         from ..builtin.commands import get_command_map

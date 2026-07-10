@@ -4,7 +4,7 @@ from typing import Tuple, List
 class DirectiveProcessor(ABC):
     """Base interface for prompt directive processors (LSP/OCP)."""
     @abstractmethod
-    def process(self, prompt: str, skills_paths: list[str] = None, disabled_skills: set[str] = None) -> Tuple[str, list[str]]:
+    def process(self, prompt: str, skills_paths: list[str] | None = None, disabled_skills: set[str] | None = None) -> Tuple[str, list[str]]:
         """
         Processes the prompt and returns a tuple containing the updated prompt and a list
         of strings containing the extra context to be injected.
@@ -26,7 +26,7 @@ class OutputWriter(ABC):
         pass
 
     @abstractmethod
-    def write_tool_result(self, name: str, result: str, error: str = None) -> None:
+    def write_tool_result(self, name: str, result: str, error: str | None = None) -> None:
         pass
 
     def start_loading(self, message: str = "Thinking...") -> None:
@@ -40,5 +40,5 @@ class OutputWriter(ABC):
 class InputReader(ABC):
     """Base interface for user text input (DIP/ISP)."""
     @abstractmethod
-    async def read_input(self, prompt_text: str, suggestions: list[str] = None, file_suggestions: list[str] = None, subagent_suggestions: list[str] = None) -> str:
+    async def read_input(self, prompt_text: str, suggestions: list[str] | None = None, file_suggestions: list[str] | None = None, subagent_suggestions: list[str] | None = None) -> str:
         pass

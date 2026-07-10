@@ -57,7 +57,7 @@ class AliasGroup(click.Group):
                 if param.name == 'prompt':
                     prompt_param = param
                     break
-            if prompt_param in self.params:
+            if prompt_param is not None and prompt_param in self.params:
                 self.params.remove(prompt_param)
                 try:
                     return super().parse_args(ctx, args)
