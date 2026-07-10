@@ -41,7 +41,7 @@ class FileDirectiveProcessor(DirectiveProcessor):
 class SkillDirectiveProcessor(DirectiveProcessor):
     """Skill directive processor with the '/' prefix (SRP/OCP/LSP)."""
     
-    def process(self, prompt: str, skills_paths: list[str] = None) -> Tuple[str, list[str]]:
+    def process(self, prompt: str, skills_paths: list[str] = None, disabled_skills: set[str] = None) -> Tuple[str, list[str]]:
         extra_context = []
         # Ignores special REPL commands dynamically
         from .builtin.commands import get_command_map
@@ -52,6 +52,8 @@ class SkillDirectiveProcessor(DirectiveProcessor):
         for match in skill_matches:
             skill_name = match.group(1)
             if f"/{skill_name}" in commands_map:
+                continue
+            if disabled_skills and skill_name in disabled_skills:
                 continue
             skills_to_inject.append(skill_name)
 
@@ -91,11 +93,14 @@ class PromptPreprocessor:
             SkillDirectiveProcessor()
         ]
 
-    def preprocess(self, prompt: str, skills_paths: list[str] = None) -> str:
+    def preprocess(self, prompt: str, skills_paths: list[str] = None, disabled_skills: set[str] = None) -> str:
         aggregated_context = []
         current_prompt = prompt
         for processor in self._processors:
-            current_prompt, extra_context = processor.process(current_prompt, skills_paths)
+            if isinstance(processor, SkillDirectiveProcessor):
+                current_prompt, extra_context = processor.process(current_prompt, skills_paths, disabled_skills=disabled_skills)
+            else:
+                current_prompt, extra_context = processor.process(current_prompt, skills_paths)
             aggregated_context.extend(extra_context)
             
         if aggregated_context:
@@ -104,6 +109,6 @@ class PromptPreprocessor:
 
 
 # Functional compatibility wrapper
-def preprocess_prompt(prompt: str, skills_paths: list[str] = None) -> str:
+def preprocess_prompt(prompt: str, skills_paths: list[str] = None, disabled_skills: set[str] = None) -> str:
     """Functional wrapper compatible with previous versions."""
-    return PromptPreprocessor().preprocess(prompt, skills_paths)
+    return PromptPreprocessor().preprocess(prompt, skills_paths, disabled_skills=disabled_skills)

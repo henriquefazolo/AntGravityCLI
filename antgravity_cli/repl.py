@@ -99,6 +99,11 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
     if writer is None:
         writer = ConsoleOutputWriter()
         
+    if not hasattr(agent, "_disabled_skills"):
+        agent._disabled_skills = set()
+    if not hasattr(agent, "_disabled_subagents"):
+        agent._disabled_subagents = set()
+
     suggestions = _get_repl_suggestions(resolved_skills)
     
     from .utils import get_workspace_files_and_folders
@@ -135,13 +140,17 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
         else:
             for fs in formatted_skills:
                 click.echo(fs)
-
-    click.echo(f"{Fore.MAGENTA}{'-' * 40}{Style.RESET_ALL}")
-
+                
+    click.echo("-" * 40)
+    
     while True:
         try:
             # Recalculate suggestions dynamically on each prompt iteration so newly created files and skills are suggested immediately
             suggestions = _get_repl_suggestions(resolved_skills)
+            
+            # Filter out disabled skills
+            disabled_skills = getattr(agent, "_disabled_skills", set())
+            suggestions = [s for s in suggestions if s.lstrip("/") not in disabled_skills]
             
             file_suggestions = []
             for ws in workspaces:
@@ -157,11 +166,15 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
             
             from .subagents import discover_subagents_in_paths
             discovered_subagents = discover_subagents_in_paths(subagent_paths)
-            subagent_names = [sa.name for sa in discovered_subagents]
+            
+            # Filter out disabled subagents
+            disabled_agents = getattr(agent, "_disabled_subagents", set())
+            active_subagents = [sa for sa in discovered_subagents if sa.name not in disabled_agents]
+            subagent_names = [sa.name for sa in active_subagents]
             
             # Sync in-memory agent configuration subagents list
             if config:
-                config.subagents = discovered_subagents
+                config.subagents = active_subagents
 
             base_prompt = i18n.t("repl", "prompt_you")
             active_subagent = get_active_subagent_name(agent)
@@ -186,13 +199,17 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
         if not user_input:
             continue
 
+        parts = user_input.strip().split(maxsplit=1)
+        cmd_trigger = parts[0]
+        cmd_args = parts[1] if len(parts) > 1 else ""
+
         from .builtin.commands import get_command_map
         commands_map = get_command_map()
-        if user_input in commands_map:
-            continue_repl = await commands_map[user_input].execute(agent)
+        if cmd_trigger in commands_map:
+            continue_repl = await commands_map[cmd_trigger].execute(agent, context=cmd_args)
             if not continue_repl:
                 break
             continue
 
-        processed_input = preprocess_prompt(user_input, resolved_skills)
+        processed_input = preprocess_prompt(user_input, resolved_skills, disabled_skills=disabled_skills)
         await stream_chat_response(agent, processed_input, writer, silent=silent, verbose=verbose)
