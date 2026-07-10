@@ -28,13 +28,15 @@ class DisableSkillCommand(REPLCommand):
             
         # Check if skill exists
         config = getattr(agent, "config", None) or getattr(agent, "_config", None)
-        skills_paths = getattr(config, "skills_paths", None) or []
-        from ...list_skills import discover_skills_in_paths
-        from ...utils import get_base_path
-        base_dir = get_base_path()
-        cli_skills_dir = os.path.join(base_dir, "builtin", "skills")
-        paths_to_search = list(skills_paths) if skills_paths else ["skills", ".agents/skills", cli_skills_dir]
-        discovered_skills = discover_skills_in_paths(paths_to_search)
+        ws_context = getattr(config, "_ws_context", None)
+        if ws_context is None:
+            from ...workspace_context import WorkspaceContext
+            ws_context = WorkspaceContext(
+                workspaces=getattr(config, "workspaces", None),
+                skills_paths=getattr(config, "skills_paths", None)
+            )
+            
+        discovered_skills = ws_context.discover_skills()
         
         if skill_name not in discovered_skills:
             click.echo(f"{Fore.YELLOW}Warning: Skill '{skill_name}' not found among active skills.{Style.RESET_ALL}")

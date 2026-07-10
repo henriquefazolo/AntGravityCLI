@@ -20,15 +20,13 @@ class AntsCommand(REPLCommand):
         disabled_agents = getattr(agent, "_disabled_subagents", set())
         
         # Discover all subagents
-        workspaces = getattr(config, "workspaces", []) or [os.path.abspath(".")]
-        subagent_paths = []
-        for ws in workspaces:
-            workspace_subagents = os.path.join(ws, ".agents", "subagents")
-            if os.path.isdir(workspace_subagents):
-                subagent_paths.append(workspace_subagents)
-                
-        from ...subagents import discover_subagents_in_paths
-        all_subagents = discover_subagents_in_paths(subagent_paths)
+        ws_context = getattr(config, "_ws_context", None)
+        if ws_context is None:
+            from ...workspace_context import WorkspaceContext
+            workspaces = getattr(config, "workspaces", []) or [os.path.abspath(".")]
+            ws_context = WorkspaceContext(workspaces=workspaces, skills_paths=getattr(config, "skills_paths", None))
+            
+        all_subagents = ws_context.discover_subagents()
         
         if all_subagents:
             for sa in all_subagents:

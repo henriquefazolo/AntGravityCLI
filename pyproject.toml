@@ -24,7 +24,8 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "google-antigravity>=0.1.5",
     "rich>=13.7.1",
-    "prompt-toolkit>=3.0.43"
+    "prompt-toolkit>=3.0.43",
+    "PyYAML>=6.0"
 ]
 
 [project.urls]

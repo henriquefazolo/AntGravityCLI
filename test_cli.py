@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock, mock_open
 from click.testing import CliRunner
 import os
+import asyncio
 from colorama import Fore, Style
 
 # Import the CLI and functions to test
@@ -1109,6 +1110,101 @@ Log instructions."""
         mock_writer.write_thought.assert_not_called()
         mock_writer.write_tool_call.assert_not_called()
         mock_writer.write_tool_result.assert_not_called()
+
+    @patch('antgravity_cli.repl._get_repl_suggestions', return_value=['/exit', '/quit', '/reset'])
+    @patch('antgravity_cli.utils.get_workspace_files_and_folders', return_value=[])
+    def test_repl_integration_exit_commands(self, mock_files, mock_sugg):
+        """Verify that the REPL loop cleanly terminates on /exit or /quit."""
+        from antgravity_cli.repl import run_repl
+        from antgravity_cli.interfaces import InputReader, OutputWriter
+        
+        class TestReader(InputReader):
+            def __init__(self, inputs):
+                self.inputs = inputs
+            async def read_input(self, prompt, suggestions=None, file_suggestions=None, subagent_suggestions=None):
+                return self.inputs.pop(0)
+
+        class TestWriter(OutputWriter):
+            def write_thought(self, text): pass
+            def write_text(self, text): pass
+            def write_tool_call(self, name, args): pass
+            def write_tool_result(self, name, result, error=None): pass
+
+        # 1. Test /exit
+        mock_agent = MagicMock()
+        mock_agent.config = MagicMock()
+        mock_agent.config.workspaces = ["."]
+        reader = TestReader(["/exit"])
+        writer = TestWriter()
+        
+        asyncio.run(run_repl(mock_agent, [], reader, writer))
+        # Exited without error
+
+        # 2. Test /quit
+        reader = TestReader(["/quit"])
+        asyncio.run(run_repl(mock_agent, [], reader, writer))
+        # Exited without error
+
+    @patch('antgravity_cli.repl._get_repl_suggestions', return_value=['/exit', '/quit', '/reset'])
+    @patch('antgravity_cli.utils.get_workspace_files_and_folders', return_value=[])
+    def test_repl_integration_reset_command(self, mock_files, mock_sugg):
+        """Verify that the REPL cleans history on /reset."""
+        from antgravity_cli.repl import run_repl
+        
+        class TestReader:
+            def __init__(self, inputs):
+                self.inputs = inputs
+            async def read_input(self, prompt, **kwargs):
+                return self.inputs.pop(0)
+
+        mock_agent = MagicMock()
+        mock_agent.config = MagicMock()
+        mock_agent.config.workspaces = ["."]
+        mock_agent.conversation = MagicMock()
+        
+        reader = TestReader(["/reset", "/exit"])
+        mock_writer = MagicMock()
+        
+        asyncio.run(run_repl(mock_agent, [], reader, mock_writer))
+        mock_agent.conversation.clear_history.assert_called_once()
+
+    @patch('antgravity_cli.repl._get_repl_suggestions', return_value=['/exit'])
+    @patch('antgravity_cli.utils.get_workspace_files_and_folders', return_value=[])
+    def test_repl_integration_regular_prompt(self, mock_files, mock_sugg):
+        """Verify that a regular prompt goes to agent.chat and streams back."""
+        from antgravity_cli.repl import run_repl
+        from google.antigravity.types import Text
+        
+        class TestReader:
+            def __init__(self, inputs):
+                self.inputs = inputs
+            async def read_input(self, prompt, **kwargs):
+                return self.inputs.pop(0)
+
+        mock_agent = MagicMock()
+        mock_agent.config = MagicMock()
+        mock_agent.config.workspaces = ["."]
+        mock_agent.conversation = MagicMock()
+        
+        mock_response = MagicMock()
+        async def mock_chunks():
+            yield Text(step_index=0, text="Agent response")
+            
+        mock_response.chunks = mock_chunks()
+        
+        from unittest.mock import AsyncMock
+        mock_agent.chat = AsyncMock(return_value=mock_response)
+
+        reader = TestReader(["Hello Agent", "/exit"])
+        mock_writer = MagicMock()
+        
+        asyncio.run(run_repl(mock_agent, [], reader, mock_writer))
+        
+        # Verify agent.chat was invoked
+        mock_agent.chat.assert_called_once()
+        # Verify text was written
+        mock_writer.write_text.assert_called_with("Agent response")
+
 
 if __name__ == '__main__':
     unittest.main()

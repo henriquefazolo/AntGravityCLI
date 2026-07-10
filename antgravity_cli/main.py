@@ -30,7 +30,8 @@ else:
 
 from .runner import run_cli
 
-@click.command()
+
+@click.group(invoke_without_command=True)
 @click.argument('prompt', required=False)
 @click.option('--model', '-m', envvar='GEMINI_MODEL', default='gemini-3.1-flash-lite', help='Gemini model to be used.')
 @click.option('--yolo', '-y', is_flag=True, envvar='ANTGRAVITY_YOLO', help='Bypass safety confirmations and execute all actions automatically.')
@@ -43,16 +44,24 @@ from .runner import run_cli
 @click.option('--verbose-subagents', is_flag=True, envvar='ANTGRAVITY_VERBOSE_SUBAGENTS', help='Display internal reasoning thoughts and tool execution logs for subagents.')
 @click.option('--language', '-l', envvar='ANTGRAVITY_LANG', default='en-us', help='Output language (e.g. en-us, pt-br).')
 @click.option('--env-file', '-e', type=click.Path(exists=True, file_okay=True, dir_okay=False), help='Path to a custom .env file to load configurations from.')
-def main(prompt, model, yolo, workspace, system_instruction, api_key, skills_path, silent, verbose, verbose_subagents, language, env_file):
+@click.pass_context
+def main(ctx, prompt, model, yolo, workspace, system_instruction, api_key, skills_path, silent, verbose, verbose_subagents, language, env_file):
     """AntGravity CLI - Terminal-based interface for Google Antigravity agents."""
-    if prompt == "init":
-        from .init_project import run_init
-        run_init()
+    if ctx.invoked_subcommand is not None:
         return
 
     asyncio.run(run_cli(prompt, model, yolo, workspace, system_instruction, api_key, skills_path, silent=silent, verbose=verbose, verbose_subagents=verbose_subagents, language=language))
 
+
+@main.command()
+@click.option('--language', '-l', envvar='ANTGRAVITY_LANG', default='en-us', help='Output language for the wizard (e.g. en-us, pt-br).')
+def init(language):
+    """Initialize a new AntGravity workspace with customization folders and .env configuration."""
+    from . import i18n
+    i18n.set_language(language)
+    from .init_project import run_init
+    run_init()
+
+
 if __name__ == "__main__":
     main()
-
-

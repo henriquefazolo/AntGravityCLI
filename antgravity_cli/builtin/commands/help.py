@@ -33,15 +33,17 @@ class HelpCommand(REPLCommand):
         # 2. Active Skills
         click.echo(f"\n{Fore.CYAN}Active Skills:{Style.RESET_ALL}")
         config = getattr(agent, "config", None) or getattr(agent, "_config", None)
-        skills_paths = getattr(config, "skills_paths", None) or []
         disabled_skills = getattr(agent, "_disabled_skills", set())
         
-        from ...list_skills import discover_skills_in_paths
-        from ...utils import get_base_path
-        base_dir = get_base_path()
-        cli_skills_dir = os.path.join(base_dir, "builtin", "skills")
-        paths_to_search = list(skills_paths) if skills_paths else ["skills", ".agents/skills", cli_skills_dir]
-        discovered_skills = discover_skills_in_paths(paths_to_search)
+        ws_context = getattr(config, "_ws_context", None)
+        if ws_context is None:
+            from ...workspace_context import WorkspaceContext
+            ws_context = WorkspaceContext(
+                workspaces=getattr(config, "workspaces", None),
+                skills_paths=getattr(config, "skills_paths", None)
+            )
+            
+        discovered_skills = ws_context.discover_skills()
         
         if discovered_skills:
             for s in discovered_skills:
@@ -53,15 +55,8 @@ class HelpCommand(REPLCommand):
         # 3. Colony Subagents
         click.echo(f"\n{Fore.CYAN}Colony Subagents (Ants):{Style.RESET_ALL}")
         disabled_agents = getattr(agent, "_disabled_subagents", set())
-        workspaces = getattr(config, "workspaces", []) or [os.path.abspath(".")]
-        subagent_paths = []
-        for ws in workspaces:
-            workspace_subagents = os.path.join(ws, ".agents", "subagents")
-            if os.path.isdir(workspace_subagents):
-                subagent_paths.append(workspace_subagents)
-                
-        from ...subagents import discover_subagents_in_paths
-        all_subagents = discover_subagents_in_paths(subagent_paths)
+        
+        all_subagents = ws_context.discover_subagents()
         if all_subagents:
             for sa in all_subagents:
                 status = f" [{Fore.RED}disabled{Fore.CYAN}]" if sa.name in disabled_agents else ""

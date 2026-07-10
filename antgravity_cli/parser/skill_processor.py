@@ -23,18 +23,13 @@ class SkillDirectiveProcessor(DirectiveProcessor):
                 continue
             skills_to_inject.append(skill_name)
 
-        from ..list_skills import discover_skills_in_paths
+        from ..workspace_context import WorkspaceContext
+        ws_context = WorkspaceContext(workspaces=None, skills_paths=skills_paths)
+        paths_to_search = ws_context.get_skills_search_paths()
 
         for skill_name in skills_to_inject:
-            paths_to_search = list(skills_paths) if skills_paths else []
-            if not paths_to_search:
-                from ..utils import get_base_path
-                base_dir = get_base_path()
-                cli_skills_dir = os.path.join(base_dir, "builtin", "skills")
-                paths_to_search = ["skills", ".agents/skills", cli_skills_dir]
-            
             # Unified dry discovery check
-            if skill_name in discover_skills_in_paths(paths_to_search):
+            if skill_name in ws_context.discover_skills():
                 for base_path in paths_to_search:
                     skill_dir = os.path.join(base_path, skill_name)
                     skill_md_path = os.path.join(skill_dir, "SKILL.md")

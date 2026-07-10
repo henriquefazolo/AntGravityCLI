@@ -122,22 +122,18 @@ async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silen
         writer.stop_loading()
         click.echo(i18n.t("repl", "error_during_conversation", error=str(e)), err=True)
 
-def _get_repl_suggestions(skills_paths: list[str]) -> list[str]:
+def _get_repl_suggestions(skills_paths_or_context) -> list[str]:
     """Scans registered skills folders and returns formatted skill commands and triggers."""
-    from .list_skills import discover_skills_in_paths
     from .builtin.commands import get_command_triggers
     suggestions = get_command_triggers()
     
-    # Resolve script's installation folder directory to load internal CLI skills
-    from .utils import get_base_path
-    base_dir = get_base_path()
-    cli_skills_dir = os.path.join(base_dir, "builtin", "skills")
-    
-    paths_to_search = list(skills_paths) if skills_paths else []
-    if not paths_to_search:
-        paths_to_search = ["skills", ".agents/skills", cli_skills_dir]
+    from .workspace_context import WorkspaceContext
+    if isinstance(skills_paths_or_context, WorkspaceContext):
+        discovered = skills_paths_or_context.discover_skills(force_refresh=True)
+    else:
+        ws_context = WorkspaceContext(workspaces=None, skills_paths=skills_paths_or_context)
+        discovered = ws_context.discover_skills(force_refresh=True)
         
-    discovered = discover_skills_in_paths(paths_to_search)
     for s in discovered:
         if s != "skill_example":
             suggestions.append(f"/{s}")
@@ -183,11 +179,17 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
     if not hasattr(agent, "_disabled_subagents"):
         agent._disabled_subagents = set()
 
-    suggestions = _get_repl_suggestions(resolved_skills)
+    from .workspace_context import WorkspaceContext
+    config = getattr(agent, "_config", None) or getattr(agent, "config", None)
+    ws_context = getattr(config, "_ws_context", None)
+    if ws_context is None:
+        workspaces = getattr(config, "workspaces", None) or [os.path.abspath(".")]
+        ws_context = WorkspaceContext(workspaces, resolved_skills)
+
+    suggestions = _get_repl_suggestions(ws_context)
     
     from .utils import get_workspace_files_and_folders
     file_suggestions = []
-    config = getattr(agent, "_config", None) or getattr(agent, "config", None)
     workspaces = getattr(config, "workspaces", None) or [os.path.abspath(".")]
     for ws in workspaces:
         file_suggestions.extend(get_workspace_files_and_folders(ws))
@@ -225,7 +227,7 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
     while True:
         try:
             # Recalculate suggestions dynamically on each prompt iteration so newly created files and skills are suggested immediately
-            suggestions = _get_repl_suggestions(resolved_skills)
+            suggestions = _get_repl_suggestions(ws_context)
             
             # Filter out disabled skills
             disabled_skills = getattr(agent, "_disabled_skills", set())
@@ -236,15 +238,8 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
                 file_suggestions.extend(get_workspace_files_and_folders(ws))
             file_suggestions = sorted(list(set(file_suggestions)))
 
-            # Discover subagents dynamically to allow autocompleting newly added subagents
-            subagent_paths = []
-            for ws in workspaces:
-                workspace_subagents = os.path.join(ws, ".agents", "subagents")
-                if os.path.isdir(workspace_subagents):
-                    subagent_paths.append(workspace_subagents)
-            
-            from .subagents import discover_subagents_in_paths
-            discovered_subagents = discover_subagents_in_paths(subagent_paths)
+            # Discover subagents dynamically via WorkspaceContext to allow autocompleting newly added subagents
+            discovered_subagents = ws_context.discover_subagents(force_refresh=True)
             
             # Filter out disabled subagents and example templates
             disabled_agents = getattr(agent, "_disabled_subagents", set())

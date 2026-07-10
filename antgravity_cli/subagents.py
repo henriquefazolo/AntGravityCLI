@@ -4,6 +4,8 @@ import logging
 from typing import List, Dict, Any
 from google.antigravity.types import SubagentConfig, SubagentCapabilities, BuiltinTools
 
+import yaml
+
 def parse_agent_md(content: str) -> dict:
     """Parses YAML frontmatter from AGENT.md content and returns a dictionary of configuration fields."""
     match = re.match(r'^---\s*\n(.*?)\n---\s*\n(.*)$', content, re.DOTALL)
@@ -27,68 +29,40 @@ def parse_agent_md(content: str) -> dict:
         "tools": []
     }
     
-    lines = yaml_block.splitlines()
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        stripped = line.strip()
-        if not stripped or stripped.startswith('#'):
-            i += 1
-            continue
+    try:
+        parsed_yaml = yaml.safe_load(yaml_block) or {}
+    except Exception as e:
+        logging.error(f"Error parsing YAML frontmatter: {e}")
+        parsed_yaml = {}
+
+    if isinstance(parsed_yaml, dict):
+        config["name"] = str(parsed_yaml.get("name", "")).strip()
+        config["description"] = str(parsed_yaml.get("description", "")).strip()
+        
+        sys_inst_val = parsed_yaml.get("system_instructions")
+        if sys_inst_val:
+            config["system_instructions"] = str(sys_inst_val).strip() + "\n\n" + body
             
-        if stripped.startswith("name:"):
-            config["name"] = stripped.split(":", 1)[1].strip().strip('"\'')
-        elif stripped.startswith("description:"):
-            config["description"] = stripped.split(":", 1)[1].strip().strip('"\'')
-        elif stripped.startswith("system_instructions:"):
-            sys_inst_val = stripped.split(":", 1)[1].strip().strip('"\'')
-            if sys_inst_val:
-                config["system_instructions"] = sys_inst_val + "\n\n" + body
-        elif stripped.startswith("tools:"):
-            i += 1
-            while i < len(lines) and (lines[i].strip().startswith('-') or not lines[i].strip()):
-                t_line = lines[i].strip()
-                if t_line.startswith('-'):
-                    tool_name = t_line[1:].strip().strip('"\'')
-                    if tool_name:
-                        config["tools"].append(tool_name)
-                i += 1
-            continue
-        elif stripped.startswith("capabilities:"):
-            enabled_tools = None
-            disabled_tools = None
-            i += 1
-            while i < len(lines) and (lines[i].startswith(' ') or not lines[i].strip()):
-                cap_line = lines[i].strip()
-                if cap_line.startswith("enabled_tools:"):
-                    enabled_tools = []
-                    i += 1
-                    while i < len(lines) and (lines[i].strip().startswith('-') or not lines[i].strip()):
-                        item_line = lines[i].strip()
-                        if item_line.startswith('-'):
-                            tool_name = item_line[1:].strip().strip('"\'')
-                            if tool_name:
-                                enabled_tools.append(tool_name)
-                        i += 1
-                    continue
-                elif cap_line.startswith("disabled_tools:"):
-                    disabled_tools = []
-                    i += 1
-                    while i < len(lines) and (lines[i].strip().startswith('-') or not lines[i].strip()):
-                        item_line = lines[i].strip()
-                        if item_line.startswith('-'):
-                            tool_name = item_line[1:].strip().strip('"\'')
-                            if tool_name:
-                                disabled_tools.append(tool_name)
-                        i += 1
-                    continue
-                i += 1
+        config["tools"] = parsed_yaml.get("tools", [])
+        if not isinstance(config["tools"], list):
+            config["tools"] = [config["tools"]] if config["tools"] else []
+        config["tools"] = [str(t) for t in config["tools"]]
+        
+        capabilities_yaml = parsed_yaml.get("capabilities")
+        if isinstance(capabilities_yaml, dict):
+            enabled_tools = capabilities_yaml.get("enabled_tools")
+            disabled_tools = capabilities_yaml.get("disabled_tools")
             
-            def map_builtin_tools(tool_names: list[str]) -> list[BuiltinTools]:
+            def map_builtin_tools(tool_names) -> list[BuiltinTools]:
+                if not tool_names:
+                    return []
+                if not isinstance(tool_names, list):
+                    tool_names = [tool_names]
                 res = []
                 for name in tool_names:
+                    name_str = str(name).strip()
                     for member in BuiltinTools:
-                        if member.value.lower() == name.lower() or member.name.lower() == name.lower():
+                        if member.value.lower() == name_str.lower() or member.name.lower() == name_str.lower():
                             res.append(member)
                             break
                 return res
@@ -101,10 +75,7 @@ def parse_agent_md(content: str) -> dict:
                 
             if caps:
                 config["capabilities"] = SubagentCapabilities(**caps)
-            continue
-            
-        i += 1
-        
+                
     return config
 
 def discover_subagents_in_paths(paths: List[str]) -> List[SubagentConfig]:

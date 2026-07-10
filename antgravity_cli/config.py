@@ -6,6 +6,8 @@ from google.antigravity.hooks import policy
 
 from . import i18n
 from .handlers import cli_ask_user_handler
+from .workspace_context import WorkspaceContext
+
 
 def _make_dummy_tool(name: str):
     def dummy_tool(*args, **kwargs) -> str:
@@ -13,6 +15,7 @@ def _make_dummy_tool(name: str):
         return "Placeholder execution"
     dummy_tool.__name__ = name
     return dummy_tool
+
 
 def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skills_path) -> LocalAgentConfig:
     """Configures and returns the agent's LocalAgentConfig, resolving keys, paths, and policies."""
@@ -46,9 +49,9 @@ def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skil
         else:
             sys_inst = system_instruction
 
-    # 4. Resolve Skills
+    # 4. Resolve Skills using WorkspaceContext
     raw_skills = list(skills_path) if skills_path else []
-    
+
     # If no custom skills paths were explicitly provided, dynamically search the active workspaces
     if not skills_path:
         for ws in resolved_workspace:
@@ -74,15 +77,9 @@ def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skil
             if abs_path not in resolved_skills:
                 resolved_skills.append(abs_path)
 
-    # 5. Resolve Subagents
-    subagent_paths = []
-    for ws in resolved_workspace:
-        workspace_subagents = os.path.join(ws, ".agents", "subagents")
-        if os.path.isdir(workspace_subagents):
-            subagent_paths.append(workspace_subagents)
-            
-    from .subagents import discover_subagents_in_paths
-    resolved_subagents = discover_subagents_in_paths(subagent_paths)
+    # 5. Create WorkspaceContext and discover subagents
+    ws_context = WorkspaceContext(resolved_workspace, resolved_skills)
+    resolved_subagents = ws_context.discover_subagents()
 
     # 5b. Resolve subagent tools to prevent ValueError in main agent config
     dummy_tools = []
@@ -95,7 +92,7 @@ def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skil
                     seen_tools.add(tool)
 
     # 6. Build Agent Configuration
-    return LocalAgentConfig(
+    config = LocalAgentConfig(
         model=model,
         api_key=resolved_api_key,
         policies=policies_list,
@@ -105,3 +102,8 @@ def setup_agent_config(model, yolo, workspace, system_instruction, api_key, skil
         subagents=resolved_subagents,
         tools=dummy_tools if dummy_tools else None
     )
+
+    # Attach workspace context to config for reuse by REPL commands
+    config._ws_context = ws_context
+
+    return config
