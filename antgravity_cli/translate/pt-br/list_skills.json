@@ -1,5 +1,6 @@
 {
   "skills_header": "Skills disponíveis em .agents/skills:",
   "no_skills_found": "Nenhuma skill encontrada em .agents/skills.",
-  "directory_not_found": "Diretório não encontrado: {directory}"
+  "directory_not_found": "Diretório não encontrado: {directory}",
+  "default_skill_desc": "Gatilho de habilidade ativa"
 }

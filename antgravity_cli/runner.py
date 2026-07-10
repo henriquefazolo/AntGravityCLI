@@ -1,3 +1,4 @@
+import sys
 import click
 from colorama import Fore, Style
 from google.antigravity import Agent
@@ -20,11 +21,21 @@ async def run_cli(prompt, model, yolo, workspace, system_instruction, api_key, s
     writer = ConsoleOutputWriter()
     reader = ConsoleInputReader()
 
+    # Detect piped input (stdin redirected)
+    piped_prompt = None
+    if not prompt and not sys.stdin.isatty():
+        try:
+            piped_prompt = sys.stdin.read().strip()
+        except Exception:
+            pass
+
+    effective_prompt = prompt or piped_prompt
+
     try:
-        if prompt:
-            # Single Prompt
+        if effective_prompt:
+            # Single Prompt (interactive prompt argument or piped stdin)
             async with Agent(config) as agent:
-                processed_prompt = preprocess_prompt(prompt, config.skills_paths)
+                processed_prompt = preprocess_prompt(effective_prompt, config.skills_paths)
                 await stream_chat_response(agent, processed_prompt, writer, silent=silent, verbose=verbose, verbose_subagents=verbose_subagents)
         else:
             # Interactive Mode (REPL)

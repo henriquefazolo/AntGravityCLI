@@ -65,6 +65,7 @@ async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silen
         writer.start_loading()
         response = await agent.chat(prompt)
         
+        traj_name_cache = {}
         async for chunk in response.chunks:
             is_subagent = False
             subagent_name = "Subagent"
@@ -91,7 +92,11 @@ async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silen
                         traj_id = getattr(s, "trajectory_id", None)
                         if main_id and traj_id and traj_id != main_id:
                             is_subagent = True
-                            subagent_name = get_subagent_name_by_id(agent, traj_id)
+                            if traj_id in traj_name_cache:
+                                subagent_name = traj_name_cache[traj_id]
+                            else:
+                                subagent_name = get_subagent_name_by_id(agent, traj_id)
+                                traj_name_cache[traj_id] = subagent_name
                         break
             except Exception:
                 pass
@@ -127,18 +132,21 @@ async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silen
         writer.stop_loading()
         click.echo(i18n.t("repl", "error_during_conversation", error=str(e)), err=True)
 
-def _get_repl_suggestions(skills_paths_or_context) -> list[str]:
+def _get_repl_suggestions(skills_paths_or_context, force_refresh: bool = True) -> list[str]:
     """Scans registered skills folders and returns formatted skill commands and triggers."""
     from .builtin.commands import get_command_triggers
-    suggestions = get_command_triggers()
-    
     from .workspace_context import WorkspaceContext
+    
+    ws_workspaces = None
     if isinstance(skills_paths_or_context, WorkspaceContext):
-        discovered = skills_paths_or_context.discover_skills(force_refresh=True)
+        ws_workspaces = skills_paths_or_context.workspaces
+        discovered = skills_paths_or_context.discover_skills(force_refresh=force_refresh)
     else:
         ws_context = WorkspaceContext(workspaces=None, skills_paths=skills_paths_or_context)
-        discovered = ws_context.discover_skills(force_refresh=True)
+        ws_workspaces = ws_context.workspaces
+        discovered = ws_context.discover_skills(force_refresh=force_refresh)
         
+    suggestions = get_command_triggers(ws_workspaces)
     for s in discovered:
         if s != "skill_example":
             suggestions.append(f"/{s}")
@@ -210,40 +218,50 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
     click.echo(f"  {Fore.GREEN}/exit{Style.RESET_ALL} or {Fore.GREEN}/quit{Style.RESET_ALL} - {i18n.t('repl', 'command_exit_desc')}")
     click.echo(f"  {Fore.GREEN}/reset{Style.RESET_ALL}         - {i18n.t('repl', 'command_reset_desc')}")
     
-    # Display active skills limited to 5 with an "and more" suffix
+    # Display active skills with compact banner format if there are more than 5
     skills = [s.lstrip("/") for s in suggestions if s not in ("/exit", "/quit", "/reset")]
     if skills:
-        formatted_skills = [f"  {Fore.GREEN}/{s}{Style.RESET_ALL}" for s in skills]
-        if len(formatted_skills) > 5:
-            for fs in formatted_skills[:5]:
-                click.echo(fs)
-            click.echo(f"  ... {i18n.t('repl', 'and_more')}")
+        if len(skills) > 5:
+            click.echo(i18n.t('repl', 'active_skills_banner', count=len(skills)))
         else:
+            formatted_skills = [f"  {Fore.GREEN}/{s}{Style.RESET_ALL}" for s in skills]
             for fs in formatted_skills:
                 click.echo(fs)
                 
     click.echo("-" * 40)
     
+    import time
+    last_cache_time = 0.0
+    cache_ttl = 5.0
+    cached_suggestions = []
+    cached_file_suggestions = []
+    cached_active_subagents = []
+    
     while True:
         try:
-            # Recalculate suggestions dynamically on each prompt iteration so newly created files and skills are suggested immediately
-            suggestions = _get_repl_suggestions(ws_context)
+            current_time = time.time()
+            cache_invalidated = (ws_context._subagent_cache is None or ws_context._skills_cache is None)
             
-            # Filter out disabled skills
+            if cache_invalidated or (current_time - last_cache_time > cache_ttl):
+                do_force = cache_invalidated or (current_time - last_cache_time > cache_ttl)
+                cached_suggestions = _get_repl_suggestions(ws_context, force_refresh=do_force)
+                
+                file_suggestions = []
+                for ws in workspaces:
+                    file_suggestions.extend(get_workspace_files_and_folders(ws))
+                cached_file_suggestions = sorted(list(set(file_suggestions)))
+                
+                cached_active_subagents = ws_context.discover_subagents(force_refresh=do_force)
+                last_cache_time = current_time
+            
+            # Filter out disabled skills dynamically
             disabled_skills = getattr(agent, "_disabled_skills", set())
-            suggestions = [s for s in suggestions if s.lstrip("/") not in disabled_skills]
+            suggestions = [s for s in cached_suggestions if s.lstrip("/") not in disabled_skills]
+            file_suggestions = cached_file_suggestions
             
-            file_suggestions = []
-            for ws in workspaces:
-                file_suggestions.extend(get_workspace_files_and_folders(ws))
-            file_suggestions = sorted(list(set(file_suggestions)))
-
-            # Discover subagents dynamically via WorkspaceContext to allow autocompleting newly added subagents
-            discovered_subagents = ws_context.discover_subagents(force_refresh=True)
-            
-            # Filter out disabled subagents and example templates
+            # Filter out disabled subagents and example templates dynamically
             disabled_agents = getattr(agent, "_disabled_subagents", set())
-            active_subagents = [sa for sa in discovered_subagents if sa.name not in disabled_agents and sa.name != "subagent_example"]
+            active_subagents = [sa for sa in cached_active_subagents if sa.name not in disabled_agents and sa.name != "subagent_example"]
             subagent_names = [sa.name for sa in active_subagents]
             
             # Sync in-memory agent configuration subagents list
@@ -278,7 +296,7 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
         cmd_args = parts[1] if len(parts) > 1 else ""
 
         from .builtin.commands import get_command_map
-        commands_map = get_command_map()
+        commands_map = get_command_map(workspaces)
         if cmd_trigger in commands_map:
             continue_repl = await commands_map[cmd_trigger].execute(agent, context=cmd_args)
             if not continue_repl:

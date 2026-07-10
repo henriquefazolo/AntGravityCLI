@@ -50,12 +50,24 @@ The test suite has been restructured into a modular `tests/` package. To run all
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-### Interactive Workspace Setup (`init` command)
-To initialize a new project workspace with the required folders (`.agents/`, `.agents/skills/`, `.agents/subagents/`), templates, and a configured `.env` file, run the click-native `init` subcommand:
+### Click Subcommands
+
+The CLI exposes two built-in subcommands:
+
+#### 1. Interactive Workspace Setup (`init`)
+To initialize a new project workspace with the required folders (`.agents/`, `.agents/skills/`, `.agents/subagents/`), templates, and a configured `.env` file, run:
 ```powershell
 ant init
 # or with language options (e.g., pt-br)
 ant init --language pt-br
+```
+
+#### 2. Prompt Script Batch Run (`run`)
+To run a pre-written prompt from a markdown or text file in a single-shot execution:
+```powershell
+ant run test_script.md
+# you can pass any option (model, yolo, etc.) to it
+ant run -y -m gemini-3.5-flash test_script.md
 ```
 
 ---
@@ -103,12 +115,18 @@ ant
 **Useful commands in Interactive Mode:**
 - `/reset`: Clears conversation history and resets agent context.
 - `/exit` or `/quit`: Closes the interactive terminal.
-- `/help` or `?`: Displays a detailed help message with all commands, active skills, and subagents.
+- `/help` or `?`: Displays a detailed help message with all commands, active skills, and subagents (including custom plugins).
 - `/ants` or `/subagents`: Lists all registered colony subagents and their capabilities.
 - `/disable_skill <name>`: Disables a global skill in the active session.
 - `/enable_skill <name>`: Re-enables a previously disabled global skill.
 - `/disable_agent <name>`: Disables a colony subagent (blocking delegation to it).
 - `/enable_agent <name>`: Re-enables a previously disabled colony subagent.
+- `/reload`: Reloads all active workspace skills, colony subagents, and clears caches.
+- `/clear` or `/cls`: Clears the terminal screen.
+- `/history [count]`: Displays recent prompt history.
+- `/save <name>`: Saves the active conversation step history to a JSON file (stored at `<history_dir>/sessions/`).
+- `/load <name>`: Restores step history from a previously saved JSON file.
+- `/config`: Displays active configuration parameters (with masked API key).
 
 **Auto-completion and Interactive Features:**
 * **Platform-Standard History Location**: Command history is automatically saved to platform-compliant directory paths instead of user home cluttering:
@@ -118,6 +136,9 @@ ant
 * **Active Agent Prompt Indicator**: When a subagent is executing or was invoked, the prompt dynamically updates (e.g. `You (-> SubagentName) >` or `Você (-> SubagentName) >`) to show you the current agentic context.
 * **Real-time Auto-completion**: Typing `/` triggers commands/skills, `@` triggers workspace files, and `:` lists colony subagents. Auto-completion features substring/middle-of-path matching, prefix prioritization, case-insensitivity, and backspace stability.
 * **Smart Ellipsis for Skills**: At REPL startup, active skills are listed in the welcome banner up to a limit of 5. Any excess skills are summarized with a localized ellipsis (`... and more` or `... e mais`).
+* **Multi-line Input Support**: You can type multi-line prompts by ending a line with a backslash `\`. The CLI will automatically strip trailing whitespaces and continue reading input in the next line.
+* **Stdin Pipe Support**: You can run the CLI non-interactively using pipes (e.g., `echo "Explain Python" | ant`). The CLI will detect that stdin is redirected, read the prompt, and output the response without blocking.
+* **Custom REPL Commands**: You can extend the REPL by putting custom command scripts subclassing `REPLCommand` inside the `.agents/commands/` folder of your workspace. They will be loaded dynamically at runtime.
 
 ### 3. Safe Mode vs YOLO Mode
 - **Safe Mode (Default)**: Whenever the agent tries to run risky terminal commands (like the `RUN_COMMAND` tool), the CLI will request your permission in the console (`[y/N]`) before proceeding.

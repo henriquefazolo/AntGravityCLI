@@ -23,6 +23,8 @@ class PromptPreprocessor:
         return current_prompt
 
 
+_preprocessor = PromptPreprocessor()
+
 def preprocess_prompt(prompt: str, skills_paths: list[str] = None, disabled_skills: set[str] = None) -> str:
     """Functional wrapper compatible with previous versions."""
-    return PromptPreprocessor().preprocess(prompt, skills_paths, disabled_skills=disabled_skills)
+    return _preprocessor.preprocess(prompt, skills_paths, disabled_skills=disabled_skills)

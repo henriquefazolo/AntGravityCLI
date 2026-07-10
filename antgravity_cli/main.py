@@ -42,7 +42,31 @@ except PackageNotFoundError:
 from .runner import run_cli
 
 
-@click.group(invoke_without_command=True)
+class AliasGroup(click.Group):
+    """Custom Click Group that bypasses the prompt argument when a subcommand is invoked."""
+    def parse_args(self, ctx, args):
+        subcommands = list(self.commands.keys())
+        first_non_option = None
+        for arg in args:
+            if not arg.startswith('-'):
+                first_non_option = arg
+                break
+        if first_non_option in subcommands:
+            prompt_param = None
+            for param in self.params:
+                if param.name == 'prompt':
+                    prompt_param = param
+                    break
+            if prompt_param in self.params:
+                self.params.remove(prompt_param)
+                try:
+                    return super().parse_args(ctx, args)
+                finally:
+                    self.params.insert(0, prompt_param)
+        return super().parse_args(ctx, args)
+
+
+@click.group(cls=AliasGroup, invoke_without_command=True)
 @click.version_option(__version__, '--version', '-V', message='%(prog)s %(version)s')
 @click.argument('prompt', required=False)
 @click.option('--model', '-m', envvar='GEMINI_MODEL', default='gemini-3.1-flash-lite', help='Gemini model to be used.')
@@ -57,7 +81,7 @@ from .runner import run_cli
 @click.option('--language', '-l', envvar='ANTGRAVITY_LANG', default='en-us', help='Output language (e.g. en-us, pt-br).')
 @click.option('--env-file', '-e', type=click.Path(exists=True, file_okay=True, dir_okay=False), help='Path to a custom .env file to load configurations from.')
 @click.pass_context
-def main(ctx, prompt, model, yolo, workspace, system_instruction, api_key, skills_path, silent, verbose, verbose_subagents, language, env_file):
+def main(ctx, prompt=None, model=None, yolo=False, workspace=None, system_instruction=None, api_key=None, skills_path=None, silent=False, verbose=False, verbose_subagents=False, language='en-us', env_file=None):
     """AntGravity CLI - Terminal-based interface for Google Antigravity agents."""
     if ctx.invoked_subcommand is not None:
         return
@@ -73,6 +97,30 @@ def init(language):
     i18n.set_language(language)
     from .init_project import run_init
     run_init()
+
+
+@main.command()
+@click.argument('script_file', type=click.Path(exists=True, file_okay=True, dir_okay=False))
+@click.option('--model', '-m', envvar='GEMINI_MODEL', default='gemini-3.1-flash-lite', help='Gemini model to be used.')
+@click.option('--yolo', '-y', is_flag=True, envvar='ANTGRAVITY_YOLO', help='Bypass safety confirmations and execute all actions automatically.')
+@click.option('--workspace', '-w', multiple=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), envvar='ANTGRAVITY_WORKSPACE', help='Restrict file tools to these directories (default: current directory).')
+@click.option('--system-instruction', '-s', envvar='ANTGRAVITY_SYSTEM_INSTRUCTION', help='System instructions text or path to a file with instructions.')
+@click.option('--api-key', envvar='GEMINI_API_KEY', help='Gemini API key.')
+@click.option('--skills-path', '-k', multiple=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), envvar='ANTGRAVITY_SKILLS_PATH', help='Path to skills folders (can be repeated).')
+@click.option('--silent', is_flag=True, envvar='ANTGRAVITY_SILENT', help='Hide thoughts and tool executions in the terminal.')
+@click.option('--verbose', '-v', is_flag=True, envvar='ANTGRAVITY_VERBOSE', help='Display the agent\'s internal reasoning thoughts in the console.')
+@click.option('--verbose-subagents', is_flag=True, envvar='ANTGRAVITY_VERBOSE_SUBAGENTS', help='Display internal reasoning thoughts and tool execution logs for subagents.')
+@click.option('--language', '-l', envvar='ANTGRAVITY_LANG', default='en-us', help='Output language (e.g. en-us, pt-br).')
+def run(script_file, model, yolo, workspace, system_instruction, api_key, skills_path, silent, verbose, verbose_subagents, language):
+    """Run a prompt script file in single-shot mode."""
+    try:
+        with open(script_file, "r", encoding="utf-8") as f:
+            prompt_content = f.read().strip()
+    except Exception as e:
+        click.echo(f"Error reading script file '{script_file}': {e}", err=True)
+        return
+
+    asyncio.run(run_cli(prompt_content, model, yolo, workspace, system_instruction, api_key, skills_path, silent=silent, verbose=verbose, verbose_subagents=verbose_subagents, language=language))
 
 
 if __name__ == "__main__":

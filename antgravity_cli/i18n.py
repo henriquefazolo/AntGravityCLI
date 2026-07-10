@@ -8,8 +8,10 @@ _translation_cache: Dict[str, Dict[str, str]] = {}
 def set_language(lang: str) -> None:
     """Sets the active language for CLI output messages."""
     global _current_language
+    global _translation_cache
     if lang:
         _current_language = lang.lower().strip()
+        _translation_cache.clear()
 
 def get_language() -> str:
     """Returns the currently active language code."""

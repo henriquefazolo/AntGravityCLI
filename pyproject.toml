@@ -45,5 +45,11 @@ include = ["antgravity_cli*"]
     "builtin/skills/*/scripts/*",
     "builtin/skills/*/examples/*",
     "builtin/skills/*/references/*",
-    "builtin/AGENTS.md"
+    "builtin/AGENTS.md",
+    "py.typed"
 ]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+strict = false

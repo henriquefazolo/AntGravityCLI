@@ -13,5 +13,11 @@
   "agent_not_disabled": "Subagent '{agent_name}' is not currently disabled.",
   "no_active_skills": "  No active skills found.",
   "no_subagents_registered": "  No subagents registered in the colony.",
-  "no_subagents_colony": "  No subagents registered in this colony."
+  "no_subagents_colony": "  No subagents registered in this colony.",
+  "reload_success_message": "Session reloaded! Found {skills_count} skills and {agents_count} active subagents.",
+  "save_error_no_name": "Error: Please specify a name for the session (e.g. /save my_session)",
+  "save_success": "Session saved successfully as '{name}'",
+  "load_error_no_name": "Error: Please specify a session name to load (e.g. /load my_session)",
+  "load_error_not_found": "Error: Session '{name}' not found.",
+  "load_success": "Session '{name}' loaded successfully! ({count} steps restored)"
 }
