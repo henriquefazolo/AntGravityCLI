@@ -24,17 +24,18 @@ class TestAntigravityConfig(unittest.TestCase):
     @patch.dict(os.environ, {"GEMINI_API_KEY": "dummy_key"})
     def test_setup_agent_config_skills_fallback(self):
         """Verify that setup_agent_config resolves both custom -k paths and the native CLI installation folder's builtin/skills."""
+        dummy_path = os.path.abspath(os.path.normpath("some/other/path"))
         config = setup_agent_config(
             model="gemini-3.5-flash",
             yolo=False,
             workspace=["."],
             system_instruction=None,
             api_key=None,
-            skills_path=["C:\\some\\other\\path"]
+            skills_path=[dummy_path]
         )
         self.assertIsNotNone(config.skills_paths)
         self.assertEqual(len(config.skills_paths), 2)
-        self.assertIn("C:\\some\\other\\path", config.skills_paths)
+        self.assertIn(dummy_path, config.skills_paths)
         self.assertTrue(config.skills_paths[1].endswith(os.path.join("builtin", "skills")))
 
     @patch.dict(os.environ, {"GEMINI_API_KEY": "dummy_key"})
