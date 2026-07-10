@@ -30,3 +30,6 @@ build/
 # Test environment
 test_venv_temp/
 
+# Todo
+.todo/
+

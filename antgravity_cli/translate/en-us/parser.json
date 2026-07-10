@@ -4,5 +4,6 @@
   "directory_listing_header": "=== DIRECTORY LISTING: {filepath} ===",
   "error_listing_directory": "[Error listing directory {filepath}: {error}]",
   "skill_instructions_header": "=== SKILL INSTRUCTIONS: {skill_name} ===",
-  "error_loading_skill": "[Error loading skill {skill_name}: {error}]"
+  "error_loading_skill": "[Error loading skill {skill_name}: {error}]",
+  "file_not_found_warning": "File or directory '@{filepath}' was not found — skipping file injection."
 }

@@ -4,5 +4,6 @@
   "directory_listing_header": "=== LISTAGEM DO DIRETÓRIO: {filepath} ===",
   "error_listing_directory": "[Erro ao listar diretório {filepath}: {error}]",
   "skill_instructions_header": "=== INSTRUÇÕES DA SKILL: {skill_name} ===",
-  "error_loading_skill": "[Erro ao carregar a skill {skill_name}: {error}]"
+  "error_loading_skill": "[Erro ao carregar a skill {skill_name}: {error}]",
+  "file_not_found_warning": "Arquivo ou diretório '@{filepath}' não foi encontrado — pulando injeção de arquivo."
 }

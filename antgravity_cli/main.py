@@ -29,15 +29,10 @@ else:
         load_dotenv(cwd_env, override=True)
 
 import colorama
-from importlib.metadata import version, PackageNotFoundError
-
 # Centralized colorama initialization for console colors
 colorama.init()
 
-try:
-    __version__ = version("AntGravityCLI")
-except PackageNotFoundError:
-    __version__ = "1.2.4"
+from . import __version__
 
 from .runner import run_cli
 

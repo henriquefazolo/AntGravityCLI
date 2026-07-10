@@ -88,7 +88,7 @@ class ConsoleOutputWriter(OutputWriter):
         self._stop_live()
         self._console.print(f"\n[yellow]{i18n.t('console_io', 'tool_calling', name=name, args=args)}[/yellow]")
 
-    def write_tool_result(self, name: str, result: str, error: str = None) -> None:
+    def write_tool_result(self, name: str, result: str, error: str | None = None) -> None:
         self.stop_loading()
         self._stop_live()
         if error:

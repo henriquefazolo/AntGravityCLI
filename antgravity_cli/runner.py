@@ -16,6 +16,8 @@ async def run_cli(prompt, model, yolo, workspace, system_instruction, api_key, s
         config = setup_agent_config(model, yolo, workspace, system_instruction, api_key, skills_path)
     except (ValueError, IOError) as e:
         click.echo(f"{Fore.RED}{e}{Style.RESET_ALL}", err=True)
+        if "API key" in str(e) or "chave de API" in str(e):
+            click.echo(f"{Fore.YELLOW}{i18n.t('runner', 'api_key_tip')}{Style.RESET_ALL}", err=True)
         return
 
     writer = ConsoleOutputWriter()

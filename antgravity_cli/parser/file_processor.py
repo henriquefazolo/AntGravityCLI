@@ -1,6 +1,8 @@
 import os
 import re
 from typing import Tuple
+import click
+from colorama import Fore, Style
 from .. import i18n
 from ..interfaces import DirectiveProcessor
 
@@ -34,5 +36,7 @@ class FileDirectiveProcessor(DirectiveProcessor):
                     extra_context.append(f"{i18n.t('parser', 'directory_listing_header', filepath=filepath)}\n{content}\n")
                 except Exception as e:
                     extra_context.append(f"{i18n.t('parser', 'error_listing_directory', filepath=filepath, error=str(e))}\n")
+            else:
+                click.echo(f"{Fore.YELLOW}[WARNING] {i18n.t('parser', 'file_not_found_warning', filepath=filepath)}{Style.RESET_ALL}", err=True)
                     
         return prompt, extra_context

@@ -167,6 +167,19 @@ class TestAntigravityREPL(unittest.TestCase):
         self.assertIn("@README.md", texts)
         self.assertIn("@antgravity_cli/main.py", texts)
 
+        # Test subagent completion
+        doc4 = Document(":tes")
+        completions4 = list(completer.get_completions(doc4, None))
+        self.assertEqual(len(completions4), 1)
+        self.assertEqual(completions4[0].text, ":test_helper")
+        
+        doc5 = Document(":")
+        completions5 = list(completer.get_completions(doc5, None))
+        self.assertEqual(len(completions5), 2)
+        subagent_texts = [c.text for c in completions5]
+        self.assertIn(":test_helper", subagent_texts)
+        self.assertIn(":log_analyzer", subagent_texts)
+
     def test_get_active_subagent_name(self):
         """Verify that get_active_subagent_name extracts the subagent name from history."""
         from google.antigravity import types
@@ -281,10 +294,10 @@ class TestAntigravityREPL(unittest.TestCase):
     @patch('antgravity_cli.utils.get_workspace_files_and_folders', return_value=[])
     def test_repl_integration_reset_command(self, mock_files, mock_sugg):
         """Verify that the REPL cleans history on /reset."""
-        class TestReader:
+        class TestReader(InputReader):
             def __init__(self, inputs):
                 self.inputs = inputs
-            async def read_input(self, prompt, **kwargs):
+            async def read_input(self, prompt, suggestions=None, file_suggestions=None, subagent_suggestions=None):
                 return self.inputs.pop(0)
 
         mock_agent = MagicMock()
@@ -302,10 +315,10 @@ class TestAntigravityREPL(unittest.TestCase):
     @patch('antgravity_cli.utils.get_workspace_files_and_folders', return_value=[])
     def test_repl_integration_regular_prompt(self, mock_files, mock_sugg):
         """Verify that a regular prompt goes to agent.chat and streams back."""
-        class TestReader:
+        class TestReader(InputReader):
             def __init__(self, inputs):
                 self.inputs = inputs
-            async def read_input(self, prompt, **kwargs):
+            async def read_input(self, prompt, suggestions=None, file_suggestions=None, subagent_suggestions=None):
                 return self.inputs.pop(0)
 
         mock_agent = MagicMock()
