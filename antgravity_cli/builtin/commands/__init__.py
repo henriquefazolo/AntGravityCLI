@@ -2,12 +2,20 @@ from .exit import ExitCommand
 from .reset import ResetCommand
 from .help import HelpCommand
 from .ants import AntsCommand
+from .disable_skill import DisableSkillCommand
+from .enable_skill import EnableSkillCommand
+from .disable_agent import DisableAgentCommand
+from .enable_agent import EnableAgentCommand
 
 COMMANDS = [
     ExitCommand(),
     ResetCommand(),
     HelpCommand(),
-    AntsCommand()
+    AntsCommand(),
+    DisableSkillCommand(),
+    EnableSkillCommand(),
+    DisableAgentCommand(),
+    EnableAgentCommand()
 ]
 
 def get_command_map():

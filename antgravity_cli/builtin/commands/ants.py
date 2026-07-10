@@ -13,14 +13,27 @@ class AntsCommand(REPLCommand):
     def description_key(self) -> str:
         return "command_ants_desc"
 
-    async def execute(self, agent) -> bool:
+    async def execute(self, agent, context=None) -> bool:
+        import os
         click.echo(f"\n{Fore.MAGENTA}{Style.BRIGHT}=== Colony Subagents (Ants) ==={Style.RESET_ALL}")
         config = getattr(agent, "config", None) or getattr(agent, "_config", None)
-        subagents = getattr(config, "subagents", [])
+        disabled_agents = getattr(agent, "_disabled_subagents", set())
         
-        if subagents:
-            for sa in subagents:
-                click.echo(f"  {Fore.GREEN}:{sa.name:<25}{Style.RESET_ALL} - {sa.description}")
+        # Discover all subagents
+        workspaces = getattr(config, "workspaces", []) or [os.path.abspath(".")]
+        subagent_paths = []
+        for ws in workspaces:
+            workspace_subagents = os.path.join(ws, ".agents", "subagents")
+            if os.path.isdir(workspace_subagents):
+                subagent_paths.append(workspace_subagents)
+                
+        from ...subagents import discover_subagents_in_paths
+        all_subagents = discover_subagents_in_paths(subagent_paths)
+        
+        if all_subagents:
+            for sa in all_subagents:
+                status = f" [{Fore.RED}DISABLED{Fore.RESET}]" if sa.name in disabled_agents else f" [{Fore.GREEN}ACTIVE{Fore.RESET}]"
+                click.echo(f"  {Fore.GREEN}:{sa.name:<25}{Style.RESET_ALL}{status} - {sa.description}")
                 if sa.capabilities:
                     enabled = [t.value for t in getattr(sa.capabilities, "enabled_tools", []) or []]
                     disabled = [t.value for t in getattr(sa.capabilities, "disabled_tools", []) or []]
@@ -29,7 +42,6 @@ class AntsCommand(REPLCommand):
                     if disabled:
                         click.echo(f"    Tools denied: {', '.join(disabled)}")
                 if sa.tools:
-                    # sa.tools can contain string names or callables
                     tool_names = []
                     for t in sa.tools:
                         if isinstance(t, str):

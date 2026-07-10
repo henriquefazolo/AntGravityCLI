@@ -88,6 +88,10 @@ python main.py
 - `/exit` or `/quit`: Closes the interactive terminal.
 - `/help` or `?`: Displays a detailed help message with all commands, active skills, and subagents.
 - `/ants` or `/subagents`: Lists all registered colony subagents and their capabilities.
+- `/disable_skill <name>`: Disables a global skill in the active session.
+- `/enable_skill <name>`: Re-enables a previously disabled global skill.
+- `/disable_agent <name>`: Disables a colony subagent (blocking delegation to it).
+- `/enable_agent <name>`: Re-enables a previously disabled colony subagent.
 
 **Auto-completion and Interactive Features:**
 * **Persistent Command History**: Command history is automatically saved to and loaded from `~/.antgravity_history` across sessions, allowing you to use Up/Down arrow keys to navigate past inputs.

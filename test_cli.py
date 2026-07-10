@@ -642,9 +642,25 @@ class TestAntigravityCLIFunctionality(unittest.TestCase):
         self.assertIn("?", cmd_map)
         self.assertIn("/ants", cmd_map)
         self.assertIn("/subagents", cmd_map)
+        self.assertIn("/disable_skill", cmd_map)
+        self.assertIn("/enable_skill", cmd_map)
+        self.assertIn("/disable_agent", cmd_map)
+        self.assertIn("/enable_agent", cmd_map)
         
         triggers = get_command_triggers()
-        self.assertEqual(triggers, ["/ants", "/exit", "/help", "/quit", "/reset", "/subagents", "?"])
+        self.assertEqual(triggers, [
+            "/ants",
+            "/disable_agent",
+            "/disable_skill",
+            "/enable_agent",
+            "/enable_skill",
+            "/exit",
+            "/help",
+            "/quit",
+            "/reset",
+            "/subagents",
+            "?"
+        ])
 
     @patch('antgravity_cli.builtin.commands.help.click.echo')
     def test_help_command_handler(self, mock_echo):
@@ -870,6 +886,79 @@ Log instructions."""
                 self.assertIn("ANTGRAVITY_YOLO=True", content)
         finally:
             os.chdir(orig_cwd)
+            shutil.rmtree(tmp_dir)
+
+    @patch('antgravity_cli.builtin.commands.disable_skill.click.echo')
+    def test_disable_enable_skill_command(self, mock_echo):
+        """Verify that DisableSkillCommand and EnableSkillCommand update agent._disabled_skills."""
+        import asyncio
+        from antgravity_cli.builtin.commands.disable_skill import DisableSkillCommand
+        from antgravity_cli.builtin.commands.enable_skill import EnableSkillCommand
+        
+        mock_agent = MagicMock()
+        mock_agent.config.skills_paths = []
+        mock_agent._disabled_skills = set()
+        
+        # Test disabling
+        cmd_disable = DisableSkillCommand()
+        self.assertEqual(cmd_disable.description_key, "command_disable_skill_desc")
+        res = asyncio.run(cmd_disable.execute(mock_agent, context="create_txt_file"))
+        self.assertTrue(res)
+        self.assertIn("create_txt_file", mock_agent._disabled_skills)
+        
+        # Test enabling
+        cmd_enable = EnableSkillCommand()
+        self.assertEqual(cmd_enable.description_key, "command_enable_skill_desc")
+        res = asyncio.run(cmd_enable.execute(mock_agent, context="create_txt_file"))
+        self.assertTrue(res)
+        self.assertNotIn("create_txt_file", mock_agent._disabled_skills)
+
+    @patch('antgravity_cli.builtin.commands.disable_agent.click.echo')
+    def test_disable_enable_agent_command(self, mock_echo):
+        """Verify that DisableAgentCommand and EnableAgentCommand update agent._disabled_subagents."""
+        import asyncio
+        from antgravity_cli.builtin.commands.disable_agent import DisableAgentCommand
+        from antgravity_cli.builtin.commands.enable_agent import EnableAgentCommand
+        
+        mock_agent = MagicMock()
+        mock_agent.config.workspaces = []
+        mock_agent._disabled_subagents = set()
+        
+        # Test disabling
+        cmd_disable = DisableAgentCommand()
+        self.assertEqual(cmd_disable.description_key, "command_disable_agent_desc")
+        res = asyncio.run(cmd_disable.execute(mock_agent, context="LogAnalyzer"))
+        self.assertTrue(res)
+        self.assertIn("LogAnalyzer", mock_agent._disabled_subagents)
+        
+        # Test enabling
+        cmd_enable = EnableAgentCommand()
+        self.assertEqual(cmd_enable.description_key, "command_enable_agent_desc")
+        res = asyncio.run(cmd_enable.execute(mock_agent, context="LogAnalyzer"))
+        self.assertTrue(res)
+        self.assertNotIn("LogAnalyzer", mock_agent._disabled_subagents)
+
+    def test_preprocess_prompt_excludes_disabled_skills(self):
+        """Verify that preprocess_prompt does not load instructions for a disabled skill."""
+        from antgravity_cli.parser import preprocess_prompt
+        import tempfile
+        import shutil
+        
+        tmp_dir = tempfile.mkdtemp()
+        skill_dir = os.path.join(tmp_dir, "test_skill")
+        os.makedirs(skill_dir)
+        with open(os.path.join(skill_dir, "SKILL.md"), "w", encoding="utf-8") as f:
+            f.write("Secret Instructions")
+            
+        try:
+            # When active/enabled:
+            prompt1 = preprocess_prompt("Please run /test_skill", skills_paths=[tmp_dir])
+            self.assertIn("Secret Instructions", prompt1)
+            
+            # When disabled:
+            prompt2 = preprocess_prompt("Please run /test_skill", skills_paths=[tmp_dir], disabled_skills={"test_skill"})
+            self.assertNotIn("Secret Instructions", prompt2)
+        finally:
             shutil.rmtree(tmp_dir)
 
 if __name__ == '__main__':
