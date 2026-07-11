@@ -258,6 +258,12 @@ async def run_repl(agent, resolved_skills, reader: InputReader | None = None, wr
     cached_file_suggestions = []
     cached_active_subagents = []
     
+    # Initialize command map once before entering the loop
+    if isinstance(ws_context, WorkspaceContext):
+        commands_map = ws_context.get_commands_map()
+    else:
+        commands_map = get_command_map(workspaces)
+        
     while True:
         try:
             current_time = time.time()
@@ -316,10 +322,10 @@ async def run_repl(agent, resolved_skills, reader: InputReader | None = None, wr
         cmd_trigger = parts[0]
         cmd_args = parts[1] if len(parts) > 1 else ""
 
+        # Refresh commands map only if the cache has been invalidated (e.g. via /reload)
         if isinstance(ws_context, WorkspaceContext):
-            commands_map = ws_context.get_commands_map()
-        else:
-            commands_map = get_command_map(workspaces)
+            if ws_context._commands_cache is None:
+                commands_map = ws_context.get_commands_map()
         if cmd_trigger in commands_map:
             continue_repl = await commands_map[cmd_trigger].execute(agent, context=cmd_args)
             if not continue_repl:
