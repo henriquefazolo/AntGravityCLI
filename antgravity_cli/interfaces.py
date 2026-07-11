@@ -37,6 +37,10 @@ class OutputWriter(ABC):
         """Stops the visual processing indicator (optional)."""
         pass
 
+    def reset(self) -> None:
+        """Resets the writer state for a new text stream (optional)."""
+        pass
+
 class InputReader(ABC):
     """Base interface for user text input (DIP/ISP)."""
     @abstractmethod

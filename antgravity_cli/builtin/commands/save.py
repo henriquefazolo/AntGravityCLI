@@ -35,7 +35,7 @@ class SaveCommand(REPLCommand):
             with open(session_path, "w", encoding="utf-8") as f:
                 json.dump(serialized_history, f, indent=2, ensure_ascii=False)
                 
-            click.echo(f"{Fore.GREEN}{i18n.t('commands', 'save_success', name=session_name)}{Style.RESET_ALL}")
+            click.echo(f"{Fore.GREEN}{i18n.t('commands', 'save_success', name=session_name, path=os.path.abspath(session_path))}{Style.RESET_ALL}")
         except Exception as e:
             click.echo(f"{Fore.RED}Error saving session: {e}{Style.RESET_ALL}", err=True)
             

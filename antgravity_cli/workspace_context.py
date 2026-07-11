@@ -1,7 +1,7 @@
 """Centralized workspace context for discovery of skills, subagents, and paths."""
 
 import os
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from google.antigravity.types import SubagentConfig
 
@@ -18,6 +18,7 @@ class WorkspaceContext:
         self._skills_paths = skills_paths or []
         self._subagent_cache: Optional[List[SubagentConfig]] = None
         self._skills_cache: Optional[List[str]] = None
+        self._commands_cache: Optional[Dict[str, Any]] = None
 
     @property
     def workspaces(self) -> List[str]:
@@ -32,7 +33,7 @@ class WorkspaceContext:
     @skills_paths.setter
     def skills_paths(self, value: List[str]) -> None:
         """Sets the skills paths and invalidates the cache."""
-        self._skills_paths = value
+        self._skills_paths = value or []
         self._skills_cache = None
 
     def get_subagent_search_paths(self) -> List[str]:
@@ -97,7 +98,15 @@ class WorkspaceContext:
         self._skills_cache = discover_skills_in_paths(self.get_skills_search_paths())
         return self._skills_cache
 
+    def get_commands_map(self) -> Dict[str, Any]:
+        """Discovers, caches, and returns the command map for the REPL."""
+        if self._commands_cache is None:
+            from .builtin.commands import get_command_map
+            self._commands_cache = get_command_map(self._workspaces)
+        return self._commands_cache
+
     def invalidate_cache(self) -> None:
         """Invalidates all cached discovery results."""
         self._subagent_cache = None
         self._skills_cache = None
+        self._commands_cache = None

@@ -2,8 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock
 import os
 
-from antgravity_cli.config import setup_agent_config
-from antgravity_cli.handlers import cli_ask_user_handler
+from antgravity_cli.config import setup_agent_config, cli_ask_user_handler
 
 
 class TestAntigravityConfig(unittest.TestCase):

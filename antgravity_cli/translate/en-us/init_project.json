@@ -14,5 +14,5 @@
   "skipped_updating": "  [!] Skipped updating {filepath}",
   "file_exists_overwrite_confirm": "A '{filepath}' file already exists. Do you want to overwrite it?",
   "success_message": "\n[OK] AntGravity project initialized successfully!",
-  "api_key_warning": "[!] Warning: The API key does not match the expected Gemini API key format (starts with AIzaSy)."
+  "api_key_warning": "[!] Warning: API Key left empty. You will need to set GEMINI_API_KEY before running the agent."
 }

@@ -5,8 +5,19 @@ from google.antigravity import LocalAgentConfig
 from google.antigravity.hooks import policy
 
 from . import i18n
-from .handlers import cli_ask_user_handler
 from .workspace_context import WorkspaceContext
+
+
+def cli_ask_user_handler(tool_call) -> bool:
+    """Handler to request user approval in the terminal in safe mode."""
+    print(f"\n{Fore.LIGHTYELLOW_EX}{i18n.t('handlers', 'agent_wants_to_execute', name=tool_call.name)}{Style.RESET_ALL}")
+    print(f"{i18n.t('handlers', 'arguments', args=tool_call.args)}")
+    try:
+        ans = input(f"{Fore.CYAN}{i18n.t('handlers', 'allow_execution')}{Style.RESET_ALL}").strip().lower()
+        return ans in ('y', 'yes', 'sim', 's')
+    except (KeyboardInterrupt, EOFError):
+        print(f"\n{i18n.t('handlers', 'denied_by_interruption')}")
+        return False
 
 
 def _make_dummy_tool(name: str):

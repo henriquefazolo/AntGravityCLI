@@ -1,6 +1,8 @@
 import sys
+import io
 try:
-    sys.stdout.reconfigure(encoding='utf-8')
+    if isinstance(sys.stdout, io.TextIOWrapper):
+        sys.stdout.reconfigure(encoding='utf-8')
 except Exception:
     pass
 
@@ -13,6 +15,10 @@ from . import i18n
 from .interfaces import OutputWriter, InputReader
 from .console_io import ConsoleOutputWriter, ConsoleInputReader
 from .parser import preprocess_prompt
+from .workspace_context import WorkspaceContext
+from .builtin.commands import get_command_map
+from .utils import get_workspace_files_and_folders
+from . import __version__
 
 def _extract_subagent_name(args) -> str | None:
     """Helper to extract subagent name from start_subagent tool call arguments."""
@@ -55,7 +61,7 @@ def get_subagent_name_by_id(agent, traj_id: str) -> str:
         pass
     return "Subagent"
 
-async def stream_chat_response(agent, prompt, writer: OutputWriter = None, silent=False, verbose=False, verbose_subagents=False):
+async def stream_chat_response(agent, prompt, writer: OutputWriter | None = None, silent=False, verbose=False, verbose_subagents=False):
     """Runs the chat and streams the response (thoughts, tools, and text) in real time."""
     if writer is None:
         writer = ConsoleOutputWriter()
@@ -168,7 +174,7 @@ def get_active_subagent_name(agent) -> str | None:
         pass
     return None
 
-async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: OutputWriter = None, silent=False, verbose=False, verbose_subagents=False):
+async def run_repl(agent, resolved_skills, reader: InputReader | None = None, writer: OutputWriter | None = None, silent=False, verbose=False, verbose_subagents=False):
     """Runs the interactive terminal (REPL) conversing with the agent."""
     if reader is None:
         reader = ConsoleInputReader()
@@ -180,7 +186,6 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
     if not hasattr(agent, "_disabled_subagents"):
         agent._disabled_subagents = set()
 
-    from .workspace_context import WorkspaceContext
     config = getattr(agent, "_config", None) or getattr(agent, "config", None)
     ws_context = getattr(config, "_ws_context", None)
     if ws_context is None:
@@ -189,14 +194,12 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
 
     suggestions = _get_repl_suggestions(ws_context)
     
-    from .utils import get_workspace_files_and_folders
     file_suggestions = []
     workspaces = getattr(config, "workspaces", None) or [os.path.abspath(".")]
     for ws in workspaces:
         file_suggestions.extend(get_workspace_files_and_folders(ws))
     file_suggestions = sorted(list(set(file_suggestions)))
     
-    from . import __version__
     app_version = __version__
 
     # Render Option 1 colorized solid block ant art logo
@@ -214,6 +217,7 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
     click.echo(f"{Fore.CYAN}{i18n.t('repl', 'special_commands_label')}{Style.RESET_ALL}")
     click.echo(f"  {Fore.GREEN}/exit{Style.RESET_ALL} or {Fore.GREEN}/quit{Style.RESET_ALL} - {i18n.t('repl', 'command_exit_desc')}")
     click.echo(f"  {Fore.GREEN}/reset{Style.RESET_ALL}         - {i18n.t('repl', 'command_reset_desc')}")
+    click.echo(f"  {Fore.GREEN}/help{Style.RESET_ALL}          - {i18n.t('repl', 'command_help_desc')}")
     
     # Display active skills with compact banner format if there are more than 5
     skills = [s.lstrip("/") for s in suggestions if s not in ("/exit", "/quit", "/reset")]
@@ -292,8 +296,10 @@ async def run_repl(agent, resolved_skills, reader: InputReader = None, writer: O
         cmd_trigger = parts[0]
         cmd_args = parts[1] if len(parts) > 1 else ""
 
-        from .builtin.commands import get_command_map
-        commands_map = get_command_map(workspaces)
+        if isinstance(ws_context, WorkspaceContext):
+            commands_map = ws_context.get_commands_map()
+        else:
+            commands_map = get_command_map(workspaces)
         if cmd_trigger in commands_map:
             continue_repl = await commands_map[cmd_trigger].execute(agent, context=cmd_args)
             if not continue_repl:

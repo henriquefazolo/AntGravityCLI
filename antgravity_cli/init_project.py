@@ -11,7 +11,7 @@ def run_init():
     
     # 1. Gather configuration interactively
     api_key = click.prompt(i18n.t('init_project', 'prompt_api_key'), default="", show_default=False)
-    if api_key.strip() and not api_key.strip().startswith("AIzaSy"):
+    if not api_key.strip():
         click.echo(f"{Fore.YELLOW}{i18n.t('init_project', 'api_key_warning')}{Style.RESET_ALL}")
     model = click.prompt(i18n.t('init_project', 'prompt_model'), default="gemini-3.1-flash-lite")
     language = click.prompt(i18n.t('init_project', 'prompt_language'), default="en-us")

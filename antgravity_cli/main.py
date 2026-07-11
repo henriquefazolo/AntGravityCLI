@@ -111,6 +111,17 @@ def run(script_file, model, yolo, workspace, system_instruction, api_key, skills
     try:
         with open(script_file, "r", encoding="utf-8") as f:
             prompt_content = f.read().strip()
+    except UnicodeDecodeError:
+        try:
+            with open(script_file, "r", encoding="latin-1") as f:
+                prompt_content = f.read().strip()
+            if language == "pt-br":
+                click.echo(f"Aviso: Falha ao decodificar '{script_file}' como UTF-8. Lido usando latin-1 como fallback.", err=True)
+            else:
+                click.echo(f"Warning: Failed to decode '{script_file}' as UTF-8. Read using latin-1 encoding fallback.", err=True)
+        except Exception as e:
+            click.echo(f"Error reading script file '{script_file}': {e}", err=True)
+            return
     except Exception as e:
         click.echo(f"Error reading script file '{script_file}': {e}", err=True)
         return

@@ -187,6 +187,45 @@ class TestAntigravityMain(unittest.TestCase):
             os.chdir(orig_cwd)
             shutil.rmtree(tmp_dir)
 
+    @patch('antgravity_cli.main.run_cli')
+    def test_run_command_success(self, mock_run_cli):
+        """Verify that 'run' executes correctly with a valid UTF-8 script file."""
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', delete=False) as f:
+            f.write("Hello agent")
+            temp_name = f.name
+        try:
+            result = self.runner.invoke(main, ['run', temp_name])
+            self.assertEqual(result.exit_code, 0)
+            mock_run_cli.assert_called_once()
+            args, kwargs = mock_run_cli.call_args
+            self.assertEqual(args[0], "Hello agent")
+        finally:
+            os.remove(temp_name)
+
+    def test_run_command_file_not_found(self):
+        """Verify that 'run' displays an error message when the file does not exist."""
+        result = self.runner.invoke(main, ['run', 'non_existent_file_path.txt'])
+        self.assertNotEqual(result.exit_code, 0)
+        self.assertIn("does not exist", result.output)
+
+    @patch('antgravity_cli.main.run_cli')
+    def test_run_command_latin1_fallback(self, mock_run_cli):
+        """Verify that 'run' warns and falls back to latin-1 for non-UTF-8 files."""
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='wb', delete=False) as f:
+            f.write(b"Ol\xe1 agente")
+            temp_name = f.name
+        try:
+            result = self.runner.invoke(main, ['run', temp_name])
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("Warning: Failed to decode", result.output)
+            mock_run_cli.assert_called_once()
+            args, _ = mock_run_cli.call_args
+            self.assertEqual(args[0], "Olá agente")
+        finally:
+            os.remove(temp_name)
+
 
 if __name__ == '__main__':
     unittest.main()

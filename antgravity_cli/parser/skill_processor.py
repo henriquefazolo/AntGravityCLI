@@ -3,6 +3,8 @@ import re
 from typing import Tuple
 from .. import i18n
 from ..interfaces import DirectiveProcessor
+from ..builtin.commands import get_command_map
+from ..workspace_context import WorkspaceContext
 
 class SkillDirectiveProcessor(DirectiveProcessor):
     """Skill directive processor with the '/' prefix (SRP/OCP/LSP)."""
@@ -10,7 +12,6 @@ class SkillDirectiveProcessor(DirectiveProcessor):
     def process(self, prompt: str, skills_paths: list[str] | None = None, disabled_skills: set[str] | None = None) -> Tuple[str, list[str]]:
         extra_context = []
         # Ignores special REPL commands dynamically
-        from ..builtin.commands import get_command_map
         commands_map = get_command_map()
         
         skill_matches = re.finditer(r'(?<!\w)/([a-zA-Z0-9_-]+)', prompt)
@@ -23,7 +24,6 @@ class SkillDirectiveProcessor(DirectiveProcessor):
                 continue
             skills_to_inject.append(skill_name)
 
-        from ..workspace_context import WorkspaceContext
         ws_context = WorkspaceContext(workspaces=None, skills_paths=skills_paths)
         paths_to_search = ws_context.get_skills_search_paths()
 

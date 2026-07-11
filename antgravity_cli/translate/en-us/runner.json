@@ -1,4 +1,5 @@
 {
   "failed_to_run_agent": "Error: Failed to initialize or communicate with the agent. Detail: {error}",
-  "api_key_tip": "Tip: Run 'ant init' to configure your workspace, or set GEMINI_API_KEY in your .env file."
+  "api_key_tip": "Tip: Run 'ant init' to configure your workspace, or set GEMINI_API_KEY in your .env file.",
+  "initializing_agent": "Initializing agent..."
 }

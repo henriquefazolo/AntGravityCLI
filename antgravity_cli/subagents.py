@@ -1,39 +1,21 @@
 import os
-import re
 import logging
 from typing import List, Dict, Any
 from google.antigravity.types import SubagentConfig, SubagentCapabilities, BuiltinTools
 
-import yaml
+from .utils import parse_yaml_frontmatter
 
-def parse_agent_md(content: str) -> dict:
+def parse_agent_md(content: str) -> Dict[str, Any]:
     """Parses YAML frontmatter from AGENT.md content and returns a dictionary of configuration fields."""
-    match = re.match(r'^---\s*\n(.*?)\n---\s*\n(.*)$', content, re.DOTALL)
-    if not match:
-        return {
-            "name": "",
-            "description": "",
-            "system_instructions": content.strip(),
-            "capabilities": None,
-            "tools": []
-        }
-        
-    yaml_block = match.group(1)
-    body = match.group(2).strip()
+    parsed_yaml, body = parse_yaml_frontmatter(content)
     
-    config = {
+    config: Dict[str, Any] = {
         "name": "",
         "description": "",
         "system_instructions": body,
         "capabilities": None,
         "tools": []
     }
-    
-    try:
-        parsed_yaml = yaml.safe_load(yaml_block) or {}
-    except Exception as e:
-        logging.error(f"Error parsing YAML frontmatter: {e}")
-        parsed_yaml = {}
 
     if isinstance(parsed_yaml, dict):
         config["name"] = str(parsed_yaml.get("name", "")).strip()

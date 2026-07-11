@@ -48,7 +48,8 @@ class HistoryCommand(REPLCommand):
             click.echo(f"\n{Fore.MAGENTA}=== Prompt History (last {len(to_print)}) ==={Style.RESET_ALL}")
             start_idx = max(1, len(history_items) - n + 1)
             for idx, item in enumerate(to_print, start=start_idx):
-                click.echo(f"  {Fore.CYAN}{idx:<4}{Style.RESET_ALL} {item}")
+                formatted_item = item.replace("\n", f"\n       ")
+                click.echo(f"  {Fore.LIGHTBLACK_EX}{idx:<4}{Style.RESET_ALL} {Fore.WHITE}{formatted_item}{Style.RESET_ALL}")
         except Exception as e:
             click.echo(f"{Fore.RED}Error reading history: {e}{Style.RESET_ALL}", err=True)
             

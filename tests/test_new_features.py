@@ -104,8 +104,8 @@ class TestNewFeatures(unittest.TestCase):
                 res = loop.run_until_complete(cmd.execute(MagicMock(), context=" 2"))
                 self.assertTrue(res)
                 # Verify mock_echo calls including color codes and formatting spaces
-                mock_echo.assert_any_call(f"  {Fore.CYAN}2   {Style.RESET_ALL} world")
-                mock_echo.assert_any_call(f"  {Fore.CYAN}3   {Style.RESET_ALL} summarize file")
+                mock_echo.assert_any_call(f"  {Fore.LIGHTBLACK_EX}2   {Style.RESET_ALL} {Fore.WHITE}world{Style.RESET_ALL}")
+                mock_echo.assert_any_call(f"  {Fore.LIGHTBLACK_EX}3   {Style.RESET_ALL} {Fore.WHITE}summarize file{Style.RESET_ALL}")
         finally:
             loop.close()
 

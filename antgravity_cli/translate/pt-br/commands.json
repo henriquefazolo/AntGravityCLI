@@ -16,7 +16,7 @@
   "no_subagents_colony": "  Nenhum subagente registrado nesta colônia.",
   "reload_success_message": "Sessão recarregada! Encontradas {skills_count} skills e {agents_count} subagentes ativos.",
   "save_error_no_name": "Erro: Por favor, especifique o nome para a sessão (ex: /save minha_sessao)",
-  "save_success": "Sessão salva com sucesso como '{name}'",
+  "save_success": "Sessão salva com sucesso como '{name}' em: {path}",
   "load_error_no_name": "Erro: Por favor, especifique o nome da sessão para carregar (ex: /load minha_sessao)",
   "load_error_not_found": "Erro: Sessão '{name}' não encontrada.",
   "load_success": "Sessão '{name}' carregada com sucesso! ({count} etapas restauradas)"

@@ -14,5 +14,5 @@
   "skipped_updating": "  [!] Atualização de {filepath} ignorada",
   "file_exists_overwrite_confirm": "O arquivo '{filepath}' já existe. Deseja sobrescrevê-lo?",
   "success_message": "\n[OK] Projeto AntGravity inicializado com sucesso!",
-  "api_key_warning": "[!] Aviso: A chave de API não parece seguir o padrão esperado para chaves Gemini (começando com AIzaSy)."
+  "api_key_warning": "[!] Aviso: Chave de API deixada em branco. Você precisará definir GEMINI_API_KEY antes de rodar o agente."
 }

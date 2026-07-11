@@ -12,6 +12,8 @@ from .console_io import ConsoleOutputWriter, ConsoleInputReader
 async def run_cli(prompt, model, yolo, workspace, system_instruction, api_key, skills_path, silent=False, verbose=False, verbose_subagents=False, language="en-us"):
     """Initializes the agent configurations and starts either a single execution or the REPL."""
     i18n.set_language(language)
+    if not silent:
+        click.echo(f"{Fore.CYAN}[*] {i18n.t('runner', 'initializing_agent')}{Style.RESET_ALL}")
     try:
         config = setup_agent_config(model, yolo, workspace, system_instruction, api_key, skills_path)
     except (ValueError, IOError) as e:
