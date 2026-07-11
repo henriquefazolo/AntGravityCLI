@@ -16,9 +16,11 @@ class HistoryCommand(REPLCommand):
         return "command_history_desc"
 
     async def execute(self, agent, context=None) -> bool:
+        from ... import i18n
+        
         history_file = get_history_file_path()
         if not os.path.isfile(history_file):
-            click.echo(f"{Fore.YELLOW}No history file found.{Style.RESET_ALL}")
+            click.echo(f"{Fore.YELLOW}{i18n.t('commands', 'history_no_file')}{Style.RESET_ALL}")
             return True
 
         n = 10
@@ -40,17 +42,35 @@ class HistoryCommand(REPLCommand):
                 elif cleaned:
                     history_items.append(cleaned)
             
-            to_print = history_items[-n:]
-            if not to_print:
-                click.echo(f"{Fore.YELLOW}History is empty.{Style.RESET_ALL}")
+            if not history_items:
+                click.echo(f"{Fore.YELLOW}{i18n.t('commands', 'history_empty')}{Style.RESET_ALL}")
                 return True
 
-            click.echo(f"\n{Fore.MAGENTA}=== Prompt History (last {len(to_print)}) ==={Style.RESET_ALL}")
-            start_idx = max(1, len(history_items) - n + 1)
-            for idx, item in enumerate(to_print, start=start_idx):
+            to_print = history_items[-n:]
+            click.echo(f"\n{Fore.MAGENTA}{i18n.t('commands', 'history_title')}{Style.RESET_ALL}")
+            
+            history_start_idx = getattr(agent, "_history_start_idx", 0)
+            
+            printed_prev = False
+            printed_active = False
+            
+            start_idx = max(0, len(history_items) - n)
+            for idx in range(start_idx, len(history_items)):
+                item = history_items[idx]
+                is_active = (idx >= history_start_idx)
+                
+                if is_active and not printed_active:
+                    if printed_prev:
+                        click.echo(f"  {Fore.LIGHTBLACK_EX}----------------------{Style.RESET_ALL}")
+                    click.echo(f"  {Fore.GREEN}{i18n.t('commands', 'history_active_session')}{Style.RESET_ALL}")
+                    printed_active = True
+                elif not is_active and not printed_prev:
+                    click.echo(f"  {Fore.YELLOW}{i18n.t('commands', 'history_prev_sessions')}{Style.RESET_ALL}")
+                    printed_prev = True
+                    
                 formatted_item = item.replace("\n", f"\n       ")
-                click.echo(f"  {Fore.LIGHTBLACK_EX}{idx:<4}{Style.RESET_ALL} {Fore.WHITE}{formatted_item}{Style.RESET_ALL}")
+                click.echo(f"    {Fore.LIGHTBLACK_EX}{idx + 1:<4}{Style.RESET_ALL} {Fore.WHITE}{formatted_item}{Style.RESET_ALL}")
         except Exception as e:
-            click.echo(f"{Fore.RED}Error reading history: {e}{Style.RESET_ALL}", err=True)
+            click.echo(f"{Fore.RED}{i18n.t('commands', 'history_error', error=str(e))}{Style.RESET_ALL}", err=True)
             
         return True

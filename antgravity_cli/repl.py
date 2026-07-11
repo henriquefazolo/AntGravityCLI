@@ -181,6 +181,21 @@ async def run_repl(agent, resolved_skills, reader: InputReader | None = None, wr
     if writer is None:
         writer = ConsoleOutputWriter()
         
+    # Count history entries to mark the start of the active session (UX-07)
+    from .utils import get_history_file_path
+    history_file = get_history_file_path()
+    start_history_count = 0
+    if os.path.isfile(history_file):
+        try:
+            with open(history_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    cleaned = line.strip()
+                    if cleaned.startswith("+"):
+                        start_history_count += 1
+        except Exception:
+            pass
+    agent._history_start_idx = start_history_count
+        
     if not hasattr(agent, "_disabled_skills"):
         agent._disabled_skills = set()
     if not hasattr(agent, "_disabled_subagents"):
@@ -218,6 +233,11 @@ async def run_repl(agent, resolved_skills, reader: InputReader | None = None, wr
     click.echo(f"  {Fore.GREEN}/exit{Style.RESET_ALL} or {Fore.GREEN}/quit{Style.RESET_ALL} - {i18n.t('repl', 'command_exit_desc')}")
     click.echo(f"  {Fore.GREEN}/reset{Style.RESET_ALL}         - {i18n.t('repl', 'command_reset_desc')}")
     click.echo(f"  {Fore.GREEN}/help{Style.RESET_ALL}          - {i18n.t('repl', 'command_help_desc')}")
+    
+    click.echo(f"\n  {Fore.CYAN}{i18n.t('repl', 'autocomplete_shortcuts_label')}{Style.RESET_ALL}")
+    click.echo(f"    {Fore.GREEN}/{Style.RESET_ALL}  - {i18n.t('repl', 'shortcut_commands_skills')}")
+    click.echo(f"    {Fore.GREEN}@{Style.RESET_ALL}  - {i18n.t('repl', 'shortcut_files')}")
+    click.echo(f"    {Fore.GREEN}:{Style.RESET_ALL}  - {i18n.t('repl', 'shortcut_subagents')}")
     
     # Display active skills with compact banner format if there are more than 5
     skills = [s.lstrip("/") for s in suggestions if s not in ("/exit", "/quit", "/reset")]

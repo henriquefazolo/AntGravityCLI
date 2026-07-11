@@ -90,6 +90,11 @@ class TestNewFeatures(unittest.TestCase):
     @patch('os.path.isfile')
     def test_history_command(self, mock_isfile, mock_echo, mock_history_path):
         """Test history command reads and prints the requested number of prompt history entries."""
+        from antgravity_cli import i18n
+        i18n.set_language("en-us")
+        # Pre-load commands translations to populate the cache before builtins.open is mocked
+        i18n._load_translations("en-us", "commands")
+        
         mock_history_path.return_value = "fake_history.txt"
         mock_isfile.return_value = True
         
@@ -100,12 +105,18 @@ class TestNewFeatures(unittest.TestCase):
         history_file_content = "+hello\n+world\n+summarize file\n"
         loop = asyncio.new_event_loop()
         try:
+            mock_agent = MagicMock()
+            mock_agent._history_start_idx = 2
             with patch('builtins.open', mock_open(read_data=history_file_content)):
-                res = loop.run_until_complete(cmd.execute(MagicMock(), context=" 2"))
+                res = loop.run_until_complete(cmd.execute(mock_agent, context=" 2"))
                 self.assertTrue(res)
-                # Verify mock_echo calls including color codes and formatting spaces
-                mock_echo.assert_any_call(f"  {Fore.LIGHTBLACK_EX}2   {Style.RESET_ALL} {Fore.WHITE}world{Style.RESET_ALL}")
-                mock_echo.assert_any_call(f"  {Fore.LIGHTBLACK_EX}3   {Style.RESET_ALL} {Fore.WHITE}summarize file{Style.RESET_ALL}")
+                # Verify mock_echo calls including category headers, divider, and formatting
+                mock_echo.assert_any_call(f"\n{Fore.MAGENTA}=== Prompt History ==={Style.RESET_ALL}")
+                mock_echo.assert_any_call(f"  {Fore.YELLOW}[Previous Sessions]{Style.RESET_ALL}")
+                mock_echo.assert_any_call(f"    {Fore.LIGHTBLACK_EX}2   {Style.RESET_ALL} {Fore.WHITE}world{Style.RESET_ALL}")
+                mock_echo.assert_any_call(f"  {Fore.LIGHTBLACK_EX}----------------------{Style.RESET_ALL}")
+                mock_echo.assert_any_call(f"  {Fore.GREEN}[Active Session]{Style.RESET_ALL}")
+                mock_echo.assert_any_call(f"    {Fore.LIGHTBLACK_EX}3   {Style.RESET_ALL} {Fore.WHITE}summarize file{Style.RESET_ALL}")
         finally:
             loop.close()
 

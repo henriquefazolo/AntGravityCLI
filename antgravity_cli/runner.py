@@ -12,18 +12,26 @@ from .console_io import ConsoleOutputWriter, ConsoleInputReader
 async def run_cli(prompt, model, yolo, workspace, system_instruction, api_key, skills_path, silent=False, verbose=False, verbose_subagents=False, language="en-us"):
     """Initializes the agent configurations and starts either a single execution or the REPL."""
     i18n.set_language(language)
+    
+    writer = ConsoleOutputWriter()
+    reader = ConsoleInputReader()
+
     if not silent:
-        click.echo(f"{Fore.CYAN}[*] {i18n.t('runner', 'initializing_agent')}{Style.RESET_ALL}")
+        writer.start_loading(i18n.t('runner', 'initializing_agent'))
+        
     try:
-        config = setup_agent_config(model, yolo, workspace, system_instruction, api_key, skills_path)
+        import asyncio
+        config = await asyncio.to_thread(
+            setup_agent_config, model, yolo, workspace, system_instruction, api_key, skills_path
+        )
     except (ValueError, IOError) as e:
+        writer.stop_loading()
         click.echo(f"{Fore.RED}{e}{Style.RESET_ALL}", err=True)
         if "API key" in str(e) or "chave de API" in str(e):
             click.echo(f"{Fore.YELLOW}{i18n.t('runner', 'api_key_tip')}{Style.RESET_ALL}", err=True)
         return
-
-    writer = ConsoleOutputWriter()
-    reader = ConsoleInputReader()
+    finally:
+        writer.stop_loading()
 
     # Detect piped input (stdin redirected)
     piped_prompt = None

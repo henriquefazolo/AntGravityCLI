@@ -1,27 +1,34 @@
 import os
 import json
-from typing import Dict, Any
+import contextvars
+from typing import Dict, Any, Optional
 
-_current_language = "en-us"
-_translation_cache: Dict[str, Dict[str, str]] = {}
+_current_language = contextvars.ContextVar("current_language", default="en-us")
+_translation_cache: contextvars.ContextVar[Optional[Dict[str, Dict[str, str]]]] = contextvars.ContextVar("translation_cache", default=None)
+
+def _get_cache() -> Dict[str, Dict[str, str]]:
+    cache = _translation_cache.get()
+    if cache is None:
+        cache = {}
+        _translation_cache.set(cache)
+    return cache
 
 def set_language(lang: str) -> None:
     """Sets the active language for CLI output messages."""
-    global _current_language
-    global _translation_cache
     if lang:
-        _current_language = lang.lower().strip()
-        _translation_cache.clear()
+        _current_language.set(lang.lower().strip())
+        _translation_cache.set({})
 
 def get_language() -> str:
     """Returns the currently active language code."""
-    return _current_language
+    return _current_language.get()
 
 def _load_translations(lang: str, module: str) -> Dict[str, str]:
     """Loads translations from translate/{lang}/{module}.json with caching."""
     cache_key = f"{lang}/{module}"
-    if cache_key in _translation_cache:
-        return _translation_cache[cache_key]
+    cache = _get_cache()
+    if cache_key in cache:
+        return cache[cache_key]
 
     # Resolve translations directory relative to this file, compatible with PyInstaller
     from .utils import get_base_path
@@ -37,7 +44,9 @@ def _load_translations(lang: str, module: str) -> Dict[str, str]:
             # Fallback to empty dict on load errors
             translations = {}
             
-    _translation_cache[cache_key] = translations
+    new_cache = dict(cache)
+    new_cache[cache_key] = translations
+    _translation_cache.set(new_cache)
     return translations
 
 def t(module: str, key: str, **kwargs: Any) -> str:
@@ -46,12 +55,13 @@ def t(module: str, key: str, **kwargs: Any) -> str:
     Falls back to en-us if the key is missing in the current language, 
     and returns the key itself if not found anywhere.
     """
+    current_lang = _current_language.get()
     # 1. Try to get translation in active language
-    lang_translations = _load_translations(_current_language, module)
+    lang_translations = _load_translations(current_lang, module)
     message = lang_translations.get(key)
 
     # 2. Fall back to en-us if not found and current is not en-us
-    if message is None and _current_language != "en-us":
+    if message is None and current_lang != "en-us":
         en_translations = _load_translations("en-us", module)
         message = en_translations.get(key)
 
@@ -66,7 +76,7 @@ def t(module: str, key: str, **kwargs: Any) -> str:
         except (KeyError, ValueError, IndexError) as e:
             import warnings
             warnings.warn(
-                f"Translation formatting failed for key '{module}.{key}' (lang: '{_current_language}'). "
+                f"Translation formatting failed for key '{module}.{key}' (lang: '{current_lang}'). "
                 f"Format arguments mismatch. Error: {e}",
                 UserWarning,
                 stacklevel=2

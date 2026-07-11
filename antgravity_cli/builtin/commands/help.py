@@ -92,5 +92,11 @@ class HelpCommand(REPLCommand):
         else:
             click.echo(i18n.t("commands", "no_subagents_registered"))
             
+        # 4. Autocomplete Shortcuts
+        click.echo(f"\n{Fore.CYAN}{i18n.t('repl', 'autocomplete_shortcuts_label')}{Style.RESET_ALL}")
+        click.echo(f"  {Fore.GREEN}{'/':<25}{Style.RESET_ALL} - {i18n.t('repl', 'shortcut_commands_skills')}")
+        click.echo(f"  {Fore.GREEN}{'@':<25}{Style.RESET_ALL} - {i18n.t('repl', 'shortcut_files')}")
+        click.echo(f"  {Fore.GREEN}{':':<25}{Style.RESET_ALL} - {i18n.t('repl', 'shortcut_subagents')}")
+            
         click.echo(f"\n{Fore.MAGENTA}{'-' * 40}{Style.RESET_ALL}")
         return True

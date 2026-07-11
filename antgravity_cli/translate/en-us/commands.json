@@ -19,5 +19,11 @@
   "save_success": "Session saved successfully as '{name}' at: {path}",
   "load_error_no_name": "Error: Please specify a session name to load (e.g. /load my_session)",
   "load_error_not_found": "Error: Session '{name}' not found.",
-  "load_success": "Session '{name}' loaded successfully! ({count} steps restored)"
+  "load_success": "Session '{name}' loaded successfully! ({count} steps restored)",
+  "history_no_file": "No history file found.",
+  "history_empty": "History is empty.",
+  "history_title": "=== Prompt History ===",
+  "history_active_session": "[Active Session]",
+  "history_prev_sessions": "[Previous Sessions]",
+  "history_error": "Error reading history: {error}"
 }

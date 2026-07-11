@@ -22,5 +22,9 @@
   "command_history_desc": "Exibir histórico de prompts recentes (uso: /history [quantidade])",
   "command_save_desc": "Salvar o histórico de conversação ativo em arquivo (uso: /save nome)",
   "command_load_desc": "Carregar histórico de conversação a partir de arquivo (uso: /load nome)",
-  "command_config_desc": "Exibir parâmetros de configuração ativos"
+  "command_config_desc": "Exibir parâmetros de configuração ativos",
+  "autocomplete_shortcuts_label": "Atalhos de autocompletar:",
+  "shortcut_commands_skills": "Comandos e skills",
+  "shortcut_files": "Injetar arquivos/pastas do workspace",
+  "shortcut_subagents": "Delegar para subagentes do workspace"
 }

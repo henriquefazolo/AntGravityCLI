@@ -19,5 +19,11 @@
   "save_success": "Sessão salva com sucesso como '{name}' em: {path}",
   "load_error_no_name": "Erro: Por favor, especifique o nome da sessão para carregar (ex: /load minha_sessao)",
   "load_error_not_found": "Erro: Sessão '{name}' não encontrada.",
-  "load_success": "Sessão '{name}' carregada com sucesso! ({count} etapas restauradas)"
+  "load_success": "Sessão '{name}' carregada com sucesso! ({count} etapas restauradas)",
+  "history_no_file": "Nenhum arquivo de histórico encontrado.",
+  "history_empty": "O histórico está vazio.",
+  "history_title": "=== Histórico de Prompts ===",
+  "history_active_session": "[Sessão Ativa]",
+  "history_prev_sessions": "[Sessões Anteriores]",
+  "history_error": "Erro ao ler o histórico: {error}"
 }

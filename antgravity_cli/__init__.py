@@ -4,7 +4,7 @@ from importlib.metadata import version, PackageNotFoundError
 try:
     __version__ = version("AntGravityCLI")
 except PackageNotFoundError:
-    __version__ = "1.2.6"
+    __version__ = "1.2.7"
 
 from . import config
 from . import subagents
