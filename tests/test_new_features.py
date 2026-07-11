@@ -226,6 +226,7 @@ class TestNewFeatures(unittest.TestCase):
         finally:
             loop.close()
 
+    @patch('antgravity_cli.console_io.reader.HAS_PROMPT_TOOLKIT', False)
     @patch('antgravity_cli.console_io.reader.input')
     def test_multiline_input_reader(self, mock_input):
         """Test ConsoleInputReader loops when prompt lines end with a backslash."""
